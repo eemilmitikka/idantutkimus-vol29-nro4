@@ -97,6 +97,17 @@ theme_oma <- function() {
 # Regression coefficients title
 coefs <- "Regressiokertoimet\nSelitettävä muuttuja = sodan kannatus"
 odds <- "Riskiluvut\nSelitettävä muuttuja = sodan kannatus"
+
+
+
+vihrea <- "#51A195"
+punainen <- "#C56053"
+harmaa <- "#8C8D8D"
+
+tuen <- "#4B88CB"
+en_tue <- "#E66826"
+eos <- "#949494"
+
 ```
 
 # Kuva 1
@@ -530,4 +541,187 @@ dev.off()
 
 ```
 
+
+```{r}
+yandex_telegram <- here::here("data/yandex_telegram - Sheet1.csv") %>% 
+  read.csv() %>% 
+  janitor::clean_names() %>% 
+  mutate(period = dmy(str_trim(str_replace_all(period, "\\-.*", ""))),
+         relative = as.double(relative)) %>% 
+  rename(date = period,
+         absolute_telegram = absolute,
+         relative_telegram = relative)
+
+yandex_vpn <- here::here("data/yandex_vpn - Sheet1.csv") %>% 
+  read.csv() %>% 
+  janitor::clean_names() %>% 
+  mutate(period = dmy(str_trim(str_replace_all(period, "\\-.*", ""))),
+         relative = as.double(relative)) %>% 
+  rename(date = period,
+         absolute_vpn = absolute,
+         relative_vpn = relative)
+
+yandex_youtube <- here("data/yandex_youtube - Sheet1.csv") %>% 
+  read.csv() %>% 
+  janitor::clean_names() %>% 
+  mutate(period = dmy(str_trim(str_replace_all(period, "\\-.*", ""))),
+         relative = as.double(relative)) %>% 
+  rename(date = period,
+         absolute_youtube = absolute,
+         relative_youtube = relative)
+
+yandex_data <-
+  yandex_telegram %>% 
+  full_join(yandex_vpn) %>% 
+  full_join(yandex_youtube) %>% 
+  gather(key = "keyword_absolute", val = "absolute", absolute_telegram, absolute_vpn, absolute_youtube) %>% 
+  # gather(key = "keyword_relative", val = "relative", relative_telegram, relative_vpn) %>% 
+  select(date, keyword_absolute, absolute) %>% 
+  mutate(keyword_absolute = recode(keyword_absolute, "absolute_telegram" = "telegram", "absolute_vpn" = "vpn", "absolute_youtube" = "youtube"))
+
+hyokkays <- as.Date("2022-02-24")
+viivanpaa <- as.Date("2021-10-01")
+
+# Color palette for figure
+youtube <- punainen
+telegram <- "#355BB7"
+vpn <- "#FDB409"
+  
+
+figure_yandex <-
+  yandex_data %>% 
+  ggplot(aes(x = date, y = absolute, color = keyword_absolute)) +
+  geom_line(size = 1.5, alpha = 0.6) +
+  theme_bw() +
+  theme(text = element_text(family = "Times", face = "bold"),
+        title = element_text(size = 18),
+        axis.text = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = "bottom",
+        # axis.line = element_line(arrow = arrow())
+        axis.text.x = element_text(angle = 30,
+                                   margin = margin(25, 25, 25, 25),
+                                   size = 10),
+        plot.margin = margin(0,1,0,0.5, "cm")
+        ) +
+  geom_vline(xintercept = hyokkays, linetype = "dashed") +
+  geom_curve(aes(x = viivanpaa, y = 6000000, xend = hyokkays, yend = 8000000),
+    data = yandex_data,
+    arrow = arrow(length = unit(0.03, "npc")),
+    curvature = -0.3,
+    color = "black") +
+  annotate("text", y = 5000000, x = viivanpaa, label = "Venäjän\nhyökkäyssota\nalkaa", size = 5) +
+  # scale_x_date(date_labels = "%m", date_breaks = "1 month") +
+  labs(title = '"telegram", "vpn" ja "youtube"',
+       y = "Hakujen määrä (absoluuttinen)",
+       x = "Päivämäärä (kk)",
+       color = "Hakusana") +
+  scale_color_manual(values = c(telegram, vpn, youtube),
+                     labels = c('"телеграм"', '"vpn"', '"youtube"')) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%B")
+
+# Sys.setlocale("LC_TIME", "fi_FI.UTF-8")
+
+```
+
+
+```{r}
+yandex_soperation <- here::here("data/yandex_spetsoperatsiya - Sheet1.csv") %>% 
+  read.csv() %>% 
+  janitor::clean_names() %>% 
+  mutate(period = dmy(str_trim(str_replace_all(period, "\\-.*", ""))),
+         relative = as.double(relative)) %>% 
+  rename(date = period,
+         absolute_soperation = absolute,
+         relative_soperation = relative)
+
+yandex_voyna <- here::here("data/yandex_voyna - Sheet1.csv") %>% 
+  read.csv() %>% 
+  janitor::clean_names() %>% 
+  mutate(period = dmy(str_trim(str_replace_all(period, "\\-.*", ""))),
+         relative = as.double(relative)) %>% 
+  rename(date = period,
+         absolute_voyna = absolute,
+         relative_voyna = relative)
+
+yandex_data_war <- yandex_soperation %>% 
+  full_join(yandex_voyna) %>% 
+  gather(key = "keyword_absolute", val = "absolute", absolute_soperation, absolute_voyna) %>% 
+  select(date, keyword_absolute, absolute) %>% 
+  mutate(keyword_absolute = recode(keyword_absolute, "absolute_soperation" = 'Erikoisoperaatio ("спецоперация на украине")', "absolute_voyna" = 'Sota ("война на украине")'))
+
+sota <- "#5FA137"
+soperaatio <- "#949494"
+
+figure_yandex_2 <-
+  yandex_data_war %>% 
+  ggplot(aes(x = date, y = absolute, color = keyword_absolute)) +
+  geom_line(size = 1.5, alpha = 0.6) +
+  theme_bw() +
+  theme(text = element_text(family = "Times", face = "bold"),
+        title = element_text(size = 18),
+        axis.text = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = "bottom",
+        axis.text.x = element_text(angle = 30,
+                                   margin = margin(25, 25, 25, 25),
+                                   size = 10),
+        plot.margin = margin(0,1,0,0.5, "cm")) +
+  geom_vline(xintercept = hyokkays, linetype = "dashed") +
+  geom_curve(aes(x = viivanpaa, y = 6500000, xend = hyokkays, yend = 8000000),
+    data = yandex_data,
+    arrow = arrow(length = unit(0.03, "npc")),
+    curvature = -0.3,
+    color = "black") +
+  annotate("text", y = 5500000, x = viivanpaa, label = "Venäjän\nhyökkäyssota\nalkaa", size = 5) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%B") +
+  labs(title = '"erikoisoperaatio" vs. "sota"',
+       y = NULL,
+       x = "Päivämäärä (kk)",
+       color = "Hakusana") +
+  scale_y_continuous(labels = scales::comma) +
+  scale_color_manual(values = c(soperaatio, sota),
+                     labels = c('Erikoisoperaatio Ukrainassa\n("спецоперация на украине")', 'Sota Ukrainassa\n("война на украине")'))
+
+yandex_sota <-
+  yandex_data_war %>% 
+  ggplot(aes(x = date, y = absolute, color = keyword_absolute)) +
+  geom_line(size = 1.5, alpha = 0.6) +
+  theme_bw() +
+  theme(text = element_text(family = "Arial", face = "bold"),
+        title = element_text(size = 18),
+        axis.text = element_text(size = 14),
+        legend.text = element_text(size = 12),
+        legend.position = "bottom",
+        axis.text.x = element_text(angle = 30)) +
+  geom_vline(xintercept = hyokkays, linetype = "dashed", size = 1.5) +
+  geom_curve(aes(x = viivanpaa, y = 6500000, xend = hyokkays, yend = 8000000),
+    data = yandex_data,
+    arrow = arrow(length = unit(0.03, "npc")),
+    curvature = -0.3,
+    color = "red") +
+  annotate("text", y = 5500000, x = viivanpaa, label = "Russia's\nlarge-scale attack\nbegins", size = 5) +
+  scale_x_date(date_labels = "%m/%Y") +
+  labs(title = '"special operation" vs. "war"',
+       y = NULL,
+       x = "DATE",
+       color = "KEYWORD") +
+  scale_y_continuous(labels = scales::comma) +
+  scale_color_manual(values = c("red", "blue"),
+                     labels = c('Special operation in Ukraine\n("спецоперация на украине")', 'War in Ukraine\n("война на украине")'))
+
+
+
+kuva_2 <- figure_yandex + figure_yandex_2 +
+  plot_annotation(title = toupper('Tiedonvälitykseen ja sotaan liittyvien hakusanojen käyttö Yandexissa'), 
+                  subtitle = "1.8.2020–31.7.2022") & theme(text = element_text(family = "Times", size = 20, face = "bold"))
+
+kuva_2
+
+jpeg(here("img/kuva_2.jpg"), units = "in", width = 17, height = 12, res = 300)
+kuva_2
+dev.off()
+
+```
 
