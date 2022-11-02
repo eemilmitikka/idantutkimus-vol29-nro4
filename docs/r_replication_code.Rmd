@@ -9,22 +9,525 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+# Lueminut: Ohjeet replikaatioanalyysien toteuttamiseksi
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Tämä dokumentti sisältää replikaatiokoodit R-ohjelmointikielellä (versio: `r paste(version$version.string)`) ja RStudiolla (versio: 2022.7.0.548) tehtyihin visualisointeihin ja data-analyyseihin Idäntutkimuksen "Ääni"-teemanumeroon kirjoitettuun artikkeliin. Tämä R Markdown-tiedosto sisältää yhteensä seitsemän eri kuvan replikaatiokoodit. Jos replikaatioanalyysin tekijä (esim. vertaisarvioija) on kiinnostunut ensisijaisesti tutkimukseni tilastollisten mallien tarkastelusta, suosittelen siirtymään suoraan **Kuva 5**, **Kuva 6** ja **Kuva 7** otsikoilla otsikoituihin osioihin. Huomioithan kuitenkin, että sinun on ensin ajettava otsikon **R-paketit, teemat, yms.** alla oleva koodinpätkä mm. R-pakettien, analyysissä käytettyjen teemojen ja vastaavien aktivoimiseksi -- ilman tätä tilastollisten mallien replikaatiokoodi ei toimi.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Dokumentti on koostettu siten, että parsimalla tiedoston kasaan -- Knit-nappi tai Shift+Command+K (MacOS) / Shift+Control+K (Windows) -- kaikkien koodien pitäisi toimia ja tuottaa haluttu tulos.
 
-```{r cars}
-summary(cars)
+Tilastollisten mallien analyysit on tehty staattisten kyselytutkimusaineistojen pohjalta. Nämä aineistot ovat avoimesti ladattavissa seuraavista linkeistä (toimivuus tarkistettu 31.8.2022):
+
+* Chronicles: projektin [GitHub-sivut](https://github.com/dorussianswantwar/research1)
+* Russian Field: projektin nettisivut
+  - [26--28 helmikuuta 2022 tehty sotakysely](https://drive.google.com/file/d/1JslJAa062JV60FVGKjYtcF_93SMXfQgD/view)
+  - [5--7 maaliskuuta 2022 tehty sotakysely](https://drive.google.com/file/d/1EvOioLSvfiDi5SHsnYCbCcuPS8pgWTx0/view)
+  - [13--16 maaliskuuta 2022 tehty sotakysely](https://drive.google.com/file/d/1IGNkysodMW9SyONXHO6yGOFPDE08IsXK/view)
+  - [23--26 toukokuuta 2022 tehty sotakysely](https://drive.google.com/file/d/1bL6dwGZjtwTspdt_bPmUyxAwtuo91WOc/view)
+* VTSIOM: kyselytutkimuslaitoksen nettisivut, suoralinkit tässä käytettyihin aineistoihin:
+  - [Специальная военная операция в Украине: отношение и цели](https://wciom.ru/analytical-reviews/analiticheskii-obzor/specialnaja-voennaja-operacija-v-ukraine-otnoshenie-i-celi) ... Материалы ... Массив данных
+  - [Специальная военная операция: мониторинг | 23 марта 2022](https://wciom.ru/analytical-reviews/analiticheskii-obzor/specialnaja-voennaja-operacija-monitoring) ... Материалы ... Массив данных
+  - [Cпециальная военная операция: мониторинг | 30 марта 2022](https://wciom.ru/analytical-reviews/analiticheskii-obzor/cpecialnaja-voennaja-operacija-monitoring-20220330) ... Материалы ... Массив данных
+  - [Cпециальная военная операция: мониторинг | 30 мая 2022](https://wciom.ru/analytical-reviews/analiticheskii-obzor/cpecialnaja-voennaja-operacija-monitoring) ... Материалы ... Массив данных
+  - [Специальная военная операция: мониторинг | 30 июня 2022](https://wciom.ru/analytical-reviews/analiticheskii-obzor/specialnaja-voennaja-operacija-monitoring-20223006) ... Материалы ... Массив данных
+  
+Tallensin itse kaikki tässä käytetyt datasetit `data` nimiseen kansioon, jonka vuoksi työhakemisto (*working directory*) kulkee tässä käytetyn **here-paketin** logiikalla seuraavasti: `here("data/tiedostonimi.tiedostoformaatti")`, jne. Replikaatioanalyysiä tehdessä tiedostopolku on siis luonnollisesti määriteltävä oman paikallisen työhakemiston mukaan.
+
+# R-paketit, teemat, yms.
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(survey)
+library(rvest)
+library(lubridate)
+library(patchwork)
+library(here)
+library(haven)
+library(janitor)
+library(broom)
+
+theme_oma <- function() {
+  font <- "Times" # assign font family up front
+  theme_minimal() %+replace% # replace elements we want to change
+    theme(
+      # Plot grids color
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      # Text elements
+      plot.title = element_text(
+        family = font,
+        size = 18,
+        face = 'bold',
+        hjust = 0,
+        vjust = 2,
+        margin = margin(15,0,0,0)),
+      
+      plot.subtitle = element_text( # title
+                   family = font, # set font family
+                   face = 'bold', # bold typeface
+                   size = 14), # size of the title
+      # Plot caption
+      plot.caption = element_text(
+        family = font,
+        size = 10,
+        face = 'bold',
+        hjust = 1,
+        colour = "#61605A"),
+      # Axis title
+      axis.title = element_text(
+        family = font,
+        size = 12),
+      axis.text = element_text(
+        family = font,
+        face = 'bold',
+        size = 12),
+      axis.text.x = element_text(
+        margin = margin(5, b = 10)),
+      # Legend elements
+      legend.title = element_text(
+        family = font,
+        size = 10,
+        face = "bold"),
+      legend.text = element_text(
+        family = font,
+        size = 8,
+        face = "bold")
+    )
+}
+
+# Regression coefficients title
+coefs <- "Regressiokertoimet\nSelitettävä muuttuja = sodan kannatus"
+odds <- "Riskiluvut\nSelitettävä muuttuja = sodan kannatus"
 ```
 
-## Including Plots
+# Kuva 1
 
-You can also embed plots, for example:
+```{r}
+# Import Levada-Center data
+levada_data <- data.frame(date = as.Date(c("2022-03-01", "2022-04-01", "2022-05-01", "2022-06-01")),
+           definitely_yes = c(0.53, 0.45, 0.47, 0.47),
+           rather_yes = c(0.28, 0.29, 0.30, 0.28),
+           rather_no = c(0.08, 0.08, 0.08, 0.11),
+           definitely_no = c(0.06, 0.11, 0.09, 0.09),
+           no_answer = c(0.06, 0.07, 0.06, 0.05))
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+# Wrangle Levada data
+levada_data <- levada_data %>% 
+  gather(key = "support", val = "prc", definitely_yes:no_answer) %>% 
+  mutate(date = as.factor(date))
+
+levada_data$support <- factor(levada_data$support,
+                              levels = rev(c("definitely_yes", 
+                                             "rather_yes",
+                                             "rather_no",
+                                             "definitely_no",
+                                             "no_answer")))
+
+ehd_tuen <- "#355BB7"
+tuen <- "#4B88CB"
+en_tue <- "#FDB409"
+ehd_en_tue <- "#E66826"
+eos <- "#949494"
+
+paletti_levada <- c(eos, ehd_en_tue, en_tue, tuen, ehd_tuen)
+
+# Plot Levada data
+levada_sotakannatus <-
+  levada_data %>% 
+  ggplot(aes(x = date, y = prc, fill = support)) +
+  geom_col() +
+  theme_oma() +
+  geom_text(aes(label = paste0(prc*100,"%")),
+            position = position_stack(vjust = 0.5),
+            size = 4,
+            fontface = "bold",
+            family = "Times",
+            color = ifelse(levada_data$support == "definitely_yes", "white", "black")
+            ) +
+  scale_fill_manual(
+    values = paletti_levada,
+    labels = rev(c("Ehdottomasti tuen", 
+                   "Ennemmin tuen",
+                   "Ennemmin en tue",
+                   "Ehdottomasti en tue",
+                   "Ei vastausta"))) +
+  scale_x_discrete(labels = c("24.3.–30.3.", "21.4.–27.4.", "26.5.–31.5.", "23.6.–29.6.")) +
+  theme(axis.text.y = element_blank(),
+        axis.title = element_blank(),
+        axis.text.x = element_text(angle = 30,
+                                   size = 13),
+        legend.title = element_text(face = "bold.italic",
+                                    size = 14),
+        legend.text = element_text(size = 12)
+        ) +
+  labs(fill = toupper("Sodan kannatus"),
+       title = 'LEVADA-KESKUS: "Tuetteko vai ettekö tue Venäjän\nasevoimien toimia Ukrainassa?"')
+
+# VTSIOM: import war support data by scraping the data from website
+vtsiom_link_1 <- "https://wciom.ru/analytical-reviews/analiticheskii-obzor/cpecialnaja-voennaja-operacija-monitoring"
+vtsiom_page_1 <- read_html(vtsiom_link_1)
+# VTSIOM: Import the table
+vtsiom_sotakannatus_1 <- 
+  vtsiom_page_1 %>% 
+  html_elements("table.contenttable") %>% 
+  html_table() %>% 
+  .[[1]] %>% 
+  as.data.frame() %>% 
+  rename(support = "") %>% 
+  gather(key = "date", val = "prosentti_vtsiom", `25.II`:`26.V`) %>% 
+  mutate(date = as.factor(c(rep("25.2.", 3), 
+                  rep("27.2.", 3),
+                  rep("3.3.", 3),
+                  rep("17.3.", 3),
+                  rep("24.3.", 3),
+                  rep("12.4.", 3),
+                  rep("24.4.", 3),
+                  rep("12.5.", 3),
+                  rep("26.5.", 3))),
+         prosentti_vtsiom = 0.01 * prosentti_vtsiom)
+
+# Import second part of VTSIOM data
+vtsiom_link_2 <- "https://wciom.ru/analytical-reviews/analiticheskii-obzor/specialnaja-voennaja-operacija-monitoring-20223006"
+vtsiom_page_2 <- read_html(vtsiom_link_2)
+
+vtsiom_sotakannatus_2 <- 
+  vtsiom_page_2 %>% 
+  html_elements("table.contenttable") %>% 
+  html_table() %>% 
+  .[[1]] %>% 
+  as.data.frame() %>% 
+  rename(support = "") %>% 
+  select(support, "12.VI", "25.VI") %>% 
+  gather(key = "date", val = "prosentti_vtsiom", `12.VI`:`25.VI`) %>% 
+  mutate(date = as.factor(c(rep("12.6.", 3),
+                            rep("25.6.", 3))),
+         prosentti_vtsiom = 0.01 * prosentti_vtsiom)
+
+# Merge VTSIOM datasets
+vtsiom_sotakannatus <- vtsiom_sotakannatus_1 %>% 
+  full_join(vtsiom_sotakannatus_2)
+
+vtsiom_sotakannatus$date2 <- dmy(c(rep("25.2.2022", 3),
+                              rep("27.2.2022", 3),
+                               rep("3.3.2022", 3),
+                               rep("17.3.2022", 3),
+                               rep("24.3.2022", 3),
+                               rep("12.4.2022.", 3),
+                               rep("24.4.2022", 3),
+                               rep("12.5.2022", 3),
+                               rep("26.5.2022", 3), 
+                               rep("12.6.2022", 3), 
+                               rep("25.6.2022", 3)))
+# Plot VTSIOM war support data
+vtsiom_pvm <- c("25.2.", "27.2.", "3.3.", "17.3.", "24.3.", "12.4.", "24.4.", "12.5.", "26.5.", "12.6.", "25.6.")
+
+vihrea <- "#51A195"
+punainen <- "#C56053"
+harmaa <- "#8C8D8D"
+
+tuen <- "#4B88CB"
+en_tue <- "#E66826"
+eos <- "#949494"
+
+paletti_vtsiom <- c(eos, en_tue, tuen)
+
+
+vtsiom_sotakannatus_kuva <-
+  vtsiom_sotakannatus %>% 
+  ggplot(aes(x = as.factor(date2), y = prosentti_vtsiom, fill = support)) +
+  geom_col() +
+  theme_oma() +
+  geom_text(aes(label = paste0(prosentti_vtsiom*100,"%")),
+            position = position_stack(vjust = 0.5),
+            size = 4,
+            fontface = "bold",
+            family = "Times"
+            ) +
+  scale_fill_manual(values = paletti_vtsiom,
+                    labels = rev(c("Ennemmin tuen", "Ennemmin en tue", "Ei vastausta"))) +
+  scale_x_discrete(labels = vtsiom_pvm) +
+  theme(axis.text.y = element_blank(),
+        axis.title = element_blank(),
+        axis.text.x = element_text(angle = 30,
+                                   size = 13),
+        legend.title = element_text(face = "bold.italic",
+                                    size = 14),
+        legend.text = element_text(size = 12)
+        ) +
+  labs(fill = toupper("Sodan kannatus"),
+       title = 'VTSIOM: "Tuetteko vai ettekö tue Venäjän päätöstä toteuttaa sotilaallinen erikoisoperaatio Ukrainassa?"')
+  
+
+# FOM: define war support data "by hand" (information retrieved from their website)
+fom_data <- data.frame(support = as.factor(c(1, 1, 1, 1, 2, 2, 2, 2, 99, 99, 99, 99)),
+           date = rep(as.factor(c("2022-02-27", "2022-03-06", "2022-03-13", "2022-03-20")), times = 3),
+           prosentti_fom = c(0.65, 0.68, 0.68, 0.73, 0.17, 0.15, 0.12, 0.14, 0.18, 0.16, 0.20, 0.14))
+
+fom_data <-
+  data.frame(prosentti_fom = c(0.65, 0.68, 0.68, 0.73,
+                               0.17, 0.15, 0.12, 0.14,
+                               0.18, 0.16, 0.20, 0.14),
+             support = as.factor(c(rep("Oikea päätös", 4), 
+                                   rep("Väärä päätös", 4),
+                                   rep("En osaa sanoa", 4))),
+             date = ymd(c("2022-02-27",
+                          "2022-03-06",
+                          "2022-03-13",
+                          "2022-03-20")))
+
+fom_data <- 
+  fom_data %>% 
+  mutate(support = fct_relevel(support, rev(c("Oikea päätös", "Väärä päätös", "En osaa sanoa"))))
+
+# Plot the FOM data
+fom_sotakannatus <-
+  fom_data %>% 
+  ggplot(aes(x = as.factor(date), y = prosentti_fom, fill = support)) +
+  geom_col() +
+  theme_oma() +
+  geom_text(aes(label = paste0(prosentti_fom*100,"%")),
+            position = position_stack(vjust = 0.5),
+            size = 4,
+            fontface = "bold",
+            family = "Times",
+            color = ifelse(fom_data$support == "1", "white", "black")) +
+  scale_fill_manual(
+    # values = rev(c(musta, keski_harmaa, vaalea_harmaa)),
+    values = paletti_vtsiom,
+                    labels = rev(c("Oikea päätös", "Väärä päätös", "En osaa sanoa"))) +
+    theme(axis.text.y = element_blank(),
+        axis.title = element_blank(),
+        axis.text.x = element_text(angle = 30,
+                                   size = 13),
+        legend.title = element_text(face = "bold.italic",
+                                    size = 14),
+        legend.text = element_text(size = 12)
+        ) +
+  scale_x_discrete(labels = c("27.2.", "6.3.", "13.3.", "20.3.")) +
+  labs(fill = toupper("Sodan kannatus"),
+       title = 'FOM: "Oliko päätös aloittaa sotilasoperaatio Ukrainassa\noikein vai väärin?"')
+
+# Russian Field wave 1
+rf_data_1 <- here::here("data/“RF_26-28.02.2022”.sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = as.factor(q11),
+         date = as.factor("26.2.–28.2.")) %>% 
+  select(support, date, vtpv)
+
+# Russian Field wave 2
+rf_data_2 <- here::here("data/МАССИВ SPSS Russian Field - _Россия-Украина_ (всероссийский телефонный опрос, 1600, 5-7 марта).sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = as.factor(q5),
+         date = as.factor("5.3.–7.3.")) %>% 
+  select(support, date, vtpv)
+
+# Russian Field wave 3
+rf_data_3 <- here::here("data/Массив spss 13-16 марта RF.sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = as.factor(q5),
+         date = as.factor("13.3.–16.3.")) %>% 
+  select(support, date, vtpv)
+
+# Russian Field wave 7
+rf_data_4 <- here::here("data/Массив_7_Волна_Russian Field.sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = as.factor(q17),
+         date = as.factor("23.5.–26.5.")) %>% 
+  select(support, date, vtpv)
+
+# Merge Russian Field data
+rf_all <- rbind(rf_data_1, rf_data_2, rf_data_3, rf_data_4)
+
+# Russian Field: define design
+rf_all_design <- svydesign(ids =~ 1,
+                           data = rf_all,
+                           weights = rf_all$vtpv)
+
+# Russian Field: calculate percentages
+rf_all <- svytable(~support + date, design = rf_all_design) %>% 
+  as.data.frame() %>% 
+  group_by(date) %>% 
+  mutate(prc = round(100*Freq / sum(Freq), digits = 0)) %>% 
+  filter(prc != 0)
+
+rf_pvm1 <- "26.2.–28.2."
+rf_pvm2 <- "5.3.–7.3."
+rf_pvm3 <- "13.3.–16.3."
+rf_pvm4 <- "23.5.–26.5."
+
+rf_all$date <- factor(rf_all$date,
+                      levels = c(rf_pvm1, rf_pvm2, rf_pvm3, rf_pvm4))
+
+kieltaytyy <- punainen
+keltainen <- "#FDB409"
+
+paletti_rf <- c(kieltaytyy, eos, ehd_en_tue, keltainen, tuen, ehd_tuen)
+
+# Russian Field: plot overall war support
+rf_sotakannatus <-
+  rf_all %>% 
+  ggplot(aes(x = date, y = prc, fill = fct_rev(support))) +
+  geom_col() +
+  theme_oma() +
+  geom_text(aes(label = paste(prc, "%")),
+            position = position_stack(vjust = 0.5),
+            size = 4,
+            fontface = "bold",
+            family = "Times",
+            color = ifelse(rf_all$support == "1", "white", "black")
+            ) +
+  scale_fill_manual(values = paletti_rf,
+                    labels = rev(c("Ehdottomasti tuen", "Ennemmin tuen", "Ennemmin en tue", "Ehdottomasti en tue", "En osaa sanoa", "Kieltäytyy vastaamasta"))) +
+  theme(axis.text.y = element_blank(),
+        axis.title = element_blank(),
+        axis.text.x = element_text(angle = 30,
+                                   size = 13),
+        legend.title = element_text(face = "bold.italic",
+                                    size = 14),
+        legend.text = element_text(size = 12)
+        ) +
+  labs(fill = toupper("Sodan kannatus"),
+       title = 'RUSSIAN FIELD: "Tuetteko Venäjän joukkojen sotilasoperaatiota\nUkrainan alueella?"')
+
+# Chonicles data date vectors
+chronicles_pvm1 <- as.factor("28.2.–2.3.")
+chronicles_pvm2 <- as.factor("10.3.–13.3.")
+chronicles_pvm3 <- as.factor("26.3.–30.3.")
+chronicles_pvm4 <- as.factor("10.4.–18.4.")
+chronicles_pvm5 <- as.factor("14.5.–19.5.")
+chronicles_pvm6 <- as.factor("29.6.–5.7.")
+chronicles_pvm7 <- as.factor("21.9.–22.9.")
+chronicles_pvm8 <- as.factor("29.9.–30.9.")
+
+# Chronicles data imports
+chronicles_1 <- here::here("data/Полные Хроники 1.0 Datatile.sav") %>% 
+  haven::read_spss() %>%
+  janitor::clean_names() %>% 
+  mutate(support = as.factor(q4),
+         date = chronicles_pvm1) %>% 
+  select(support, date, wes_age_gender_tnp)
+
+chronicles_2 <- here::here("data/Полные Хроники 2.0 Datatile.sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = as.factor(q11),
+         date = chronicles_pvm2) %>% 
+  select(support, date, wes_age_gender_tnp)
+
+chronicles_3 <- here::here("data/Полные Хроники 3.0 Datatile.sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = as.factor(q23),
+         date = chronicles_pvm3) %>% 
+  select(support, date, wes_age_gender_tnp)
+
+chronicles_4 <- here::here("data/Полные Хроники 4.0 Datatile.sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = as.factor(q23),
+         date = chronicles_pvm4) %>% 
+  select(support, date, wes_age_gender_tnp)
+
+chronicles_5 <- here::here("data/Полные Хроники 5.0.sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = as.factor(q21),
+         date = chronicles_pvm5) %>% 
+  select(support, date, wes_age_gender_tnp)
+
+chronicles_6 <- here::here("data/Полные Хроники 6.0 Datatile.sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  # rdhs::get_variable_labels()
+  mutate(support = as.factor(q22),
+         date = chronicles_pvm6) %>% 
+  select(support, date, wes_age_gender_tnp)
+
+chronicles_7 <-
+  here::here("data/Полные Хроники Экспресс 1 Datatile.sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = as.factor(q5),
+         date = chronicles_pvm7) %>% 
+  select(support, date, wes_age_gender_tnp)
+
+chronicles_8 <- 
+  here::here("data/Полные Хроники Экспресс 2 Datatile.sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = as.factor(q5),
+         date = chronicles_pvm8) %>% 
+  select(support, date, wes_age_gender_tnp)
+  
+# Merge Chronicles data
+chronicles_all <- rbind(chronicles_1, 
+                        chronicles_2,
+                        chronicles_3,
+                        chronicles_4,
+                        chronicles_5,
+                        chronicles_6,
+                        chronicles_7,
+                        chronicles_8)
+
+# Russian Field: define design
+chronicles_all_design <- svydesign(ids =~ 1,
+                           data = chronicles_all,
+                           weights = chronicles_all$wes_age_gender_tnp)
+
+# Russian Field: calculate percentages
+chronicles_all <- svytable(~support + date, design = chronicles_all_design) %>% 
+  as.data.frame() %>% 
+  group_by(date) %>% 
+  mutate(prc = round(100*Freq / sum(Freq), digits = 0)) %>% 
+  filter(prc != 0)
+
+chronicles_all$date <- factor(chronicles_all$date,
+                        levels = c(chronicles_pvm1, 
+                                   chronicles_pvm2,
+                                   chronicles_pvm3,
+                                   chronicles_pvm4,
+                                   chronicles_pvm5,
+                                   chronicles_pvm6,
+                                   chronicles_pvm7,
+                                   chronicles_pvm8))
+
+chronicles_sotakannatus <-
+  chronicles_all %>% 
+  ggplot(aes(x = date, y = prc, fill = fct_rev(support))) +
+  geom_col() +
+  theme_oma() +
+  geom_text(aes(label = paste0(prc,"%")),
+            position = position_stack(vjust = 0.5),
+            size = 4,
+            fontface = "bold",
+            family = "Times"
+            ) +
+  scale_fill_manual(values = c(kieltaytyy, eos, ehd_en_tue, tuen),
+                    labels = rev(c("Tuen", "En tue", "En osaa sanoa", "Kieltäytyy vastaamasta"))) +
+  theme(axis.text.y = element_blank(),
+        axis.title = element_blank(),
+        axis.text.x = element_text(angle = 30,
+                                   size = 13),
+        legend.title = element_text(face = "bold.italic",
+                                    size = 14),
+        legend.text = element_text(size = 12)
+        ) +
+  labs(fill = toupper("Sodan kannatus"),
+       title = 'CHRONICLES: "Tuetteko Venäjän sotilasoperaatiota Ukrainan\nalueella, vai ettekö osaa sanoa tai halua vastata kysymykseen?"')
+
+kuva_1 <- 
+  (levada_sotakannatus | chronicles_sotakannatus) / (fom_sotakannatus | rf_sotakannatus) / vtsiom_sotakannatus_kuva
+
+# kuva_1
+
+jpeg(here("img/kuva_1.jpg"), units = "in", width = 15, height = 12, res = 300)
+kuva_1
+dev.off()
+
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
