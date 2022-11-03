@@ -1333,24 +1333,6 @@ rf_model_1_labels <- c("30–44-vuotiaat **",
                        "Tiedonlähde: VKontakte",
                        "Tiedonlähde: Yandex tai Google",
                        "Tiedonlähde: YouTube ***")
-# Russian Field, Model 1:  Regression coefficients plot
-rf_model_1_coefs_plot <-
-  rf_model_1_plot_data %>% 
-  ggplot(aes(x = term, y = estimate)) +
-  geom_point(size = 3.5) +
-  coord_flip() +
-  ylim(-1.5, 1.5) +
-  geom_errorbar(aes(ymax = upper_ci, ymin = lower_ci), width = 0.2, color = "grey50") +
-  theme_bw() +
-  theme(text = element_text(family = "Times",
-                            face = "bold",
-                            size = 14)) +
-  geom_hline(yintercept = 0, linetype = 2) +
-  labs(title = "Russian Field: Malli 1 ",
-       subtitle = coefs,
-       x = NULL,
-       y = "Regressiokerroin") +
-    scale_x_discrete(labels = rf_model_1_labels)
 
 vari_rf <- "#1189E6"
   
@@ -1451,24 +1433,6 @@ rf_model_2_labels <- c("30–44-vuotiaat **",
                        "Tiedonlähde: VKontakte",
                        "Tiedonlähde: Yandex tai Google",
                        "Tiedonlähde: YouTube **")
-# Russian Field, Model 2: Regression coefficients plot
-rf_model_2_coefs_plot <-
-  rf_model_2_plot_data %>% 
-  ggplot(aes(x = term, y = estimate)) +
-  geom_point(size = 3.5) +
-  coord_flip() +
-  ylim(-1.5, 1.5) +
-  geom_errorbar(aes(ymax = upper_ci, ymin = lower_ci), width = 0.2, color = "grey50") +
-  theme_bw() +
-  theme(text = element_text(family = "Times",
-                            face = "bold",
-                            size = 14)) +
-  geom_hline(yintercept = 0, linetype = 2) +
-  labs(title = "Russian Field: Malli 2 ",
-       subtitle = coefs,
-       x = NULL,
-       y = "Regressiokerroin") +
-    scale_x_discrete(labels = rf_model_2_labels)
 
 # Russian Field, Model 2: Odd ratios plot
 kuva_5.2 <-
@@ -1636,50 +1600,27 @@ vtsiom_model_1_labels <- c("Kaupungin tapainen taajama",
                            "60-vuotiaat ja vanhemmat ***",
                            "Korkeakoulutettu ***",
                            "Sukupuoli: mies **")
-# VTSIOM, Model 1: regression coefficients plot
-vtsiom_model_1_coefs_plot <- 
-  vtsiom_model_1_plot_data %>% 
-  ggplot(aes(x = term, y = estimate)) +
-  geom_point(size = 3.5) +
-  coord_flip() +
-  ylim(-2.5, 2.5) +
-  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2, color = "grey50") +
-  theme_bw() +
-  theme(text = element_text(family = "Times",
-                            face = "bold",
-                            size = 14)) +
-  geom_hline(yintercept = 0, linetype = 2) +
-  labs(title = "VTsIOM: Malli 1",
-       subtitle = coefs,
-       x = NULL,
-       y = "Regressiokerroin") +
-  scale_x_discrete(labels = vtsiom_model_1_labels)
+
+vari_vtsiom <- "#118369"
 
 # VTSIOM, Model 1: Odd ratios plot
-vtsiom_model_1_ors_plot <-
+kuva_6.1 <- 
   vtsiom_model_1_plot_data %>% 
   ggplot(aes(x = term, y = oratio)) +
-  geom_point(size = 3.5) +
+  geom_point(size = 6, color = vari_vtsiom) +
   coord_flip() +
   scale_y_log10(breaks = seq(0, 10, 1)) +
   geom_errorbar(aes(ymin = oratio_lower, ymax = oratio_upper), width = 0.2, color = "grey50") +
-  theme_bw() +
-  theme(text = element_text(family = "Times",
-                            face = "bold",
-                            size = 14)) +
+  theme_oma2() +
+  theme(plot.title = element_text(color = vari_vtsiom)) +
   geom_hline(yintercept = 1, linetype = 2) +
-  labs(title = NULL,
-       subtitle = odds,
+  labs(title = paste("VTSIOM, Malli 1:", odds),
        x = NULL,
-       y = "Riskiluku (logaritminen asteikko)",
+       y = toupper("Riskiluku (logaritminen asteikko)"),
        caption = bquote(atop(paste(R^2, " = ", .(vtsiom_model_1_coxsnell)),
                              paste(R^2, " = ", .(vtsiom_model_1_nagelkerke))))) +
-  scale_x_discrete(labels = NULL)
+  scale_x_discrete(labels = vtsiom_model_1_labels)
 
-# VTSIOM, Model 1: combine coeffients and odd ratios plots
-vtsiom_model_1_plot <- vtsiom_model_1_coefs_plot + vtsiom_model_1_ors_plot
-# VTSIOM, Model 1: print the model plot
-vtsiom_model_1_plot
 
 # VTSIOM, Model 2: Subset the datasets for Model 2
 vtsiom_1_model_2 <- vtsiom_1 %>%
@@ -1840,53 +1781,31 @@ vtsiom_model_2_labels <- c("Kaupungin tapainen taajama",
                            "TV:n katselu: päivittäin alle 4h ***",
                            "TV:n katselu: päivittäin yli 4h ***")
 
-# VTSIOM, Model 2: regression coefficients plot
-vtsiom_model_2_coefs_plot <-
-  vtsiom_model_2_plot_data %>% 
-  ggplot(aes(x = term, y = estimate)) +
-  geom_point(size = 3.5) +
-  coord_flip() +
-  ylim(-2.2, 2.2) +
-  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2, color = "grey50") +
-  theme_bw() +
-  theme(text = element_text(family = "Times",
-                            face = "bold",
-                            size = 14)) +
-  geom_hline(yintercept = 0, linetype = 2) +
-  labs(title = "VTsIOM: Malli 2",
-       subtitle = coefs,
-       x = NULL,
-       y = "Regressiokerroin") +
-  scale_x_discrete(labels = vtsiom_model_2_labels)
-
 # VTSIOM, Model 2: Odd ratios plot
-vtsiom_model_2_ors_plot <-
+kuva_6.2 <- 
   vtsiom_model_2_plot_data %>% 
   ggplot(aes(x = term, y = oratio)) +
-  geom_point(size = 3.5) +
+  geom_point(size = 6, color = vari_vtsiom) +
   coord_flip() +
   scale_y_log10(breaks = seq(0, 9, 1)) +
   geom_errorbar(aes(ymin = oratio_lower, ymax = oratio_upper), width = 0.2, color = "grey50") +
-  theme_bw() +
-  theme(text = element_text(family = "Times",
-                            face = "bold",
-                            size = 14)) +
+  theme_oma2() +
+  theme(plot.title = element_text(color = vari_vtsiom)) +
   geom_hline(yintercept = 1, linetype = 2) +
-  labs(title = NULL,
-       subtitle = odds,
+  labs(title = paste("VTSIOM, Malli 2:", odds),
        x = NULL,
-       y = "Riskiluku (logaritminen asteikko)",
+       y = toupper("Riskiluku (logaritminen asteikko)"),
               caption = bquote(atop(paste(R^2, " = ", .(vtsiom_model_2_coxsnell)),
                              paste(R^2, " = ", .(vtsiom_model_2_nagelkerke))))) +
-  scale_x_discrete(labels = NULL)
-# VTSIOM, Model 2: combine coeffients and odd ratios plots
-vtsiom_model_2_plot <- vtsiom_model_2_coefs_plot + vtsiom_model_2_ors_plot
-# VTSIOM, Model 2: print the combined plot for Model 2
-vtsiom_model_2_plot
-# VTSIOM: combine Model 1 and Model 2 results plots (kuva 7)
-kuva_7 <- vtsiom_model_1_plot / vtsiom_model_2_plot
-# VTSIOM: print the final full model plot (kuva 7)
-kuva_7
+  scale_x_discrete(labels = vtsiom_model_2_labels)
+
+kuva_6 <- 
+  kuva_6.1 /
+  kuva_6.2
+
+# jpeg(here("img/kuva_6.jpg"), units = "in", width = 16, height = 18, res = 300)
+# kuva_6
+# dev.off()
 
 ```
 
