@@ -697,6 +697,7 @@ kuva_2
 
 ```
 
+# Kuva 3
 
 ```{r}
 rf_response_rates <-
@@ -795,23 +796,25 @@ ggplot(rf_rr_prc_df) +
             size = 6,
             fontface = "bold",
             family = "Times") +
-  theme(
+    theme(
     axis.line.x = element_line(arrow = arrow()),
     axis.text.y = element_blank(),
     axis.title.y = element_blank(),
-    legend.position = "none",
+    legend.position = "bottom",
     axis.title.x = element_text(face = "bold",
-                                size = 18)
+                                size = 18),
+    plot.title = element_text(face = "bold.italic"),
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 15)
   ) +
   scale_x_date(date_breaks = "1 month", date_labels = "%B") +
-  # geom_vline(xintercept = dmy("03-03-2022"), linetype = 2, size = 2) +
-  # annotate("text", y = 102, x = dmy("22-03-2022"), label = "Valeuutislaki astuu voimaan", size = 6) +
   labs(title = "Vastausprosentit",
-       x = toupper("Kyselyn ajankohta (2022)")) +
-  # scale_fill_manual(values = c(punainen, harmaa, vihrea)) +
+       x = toupper("Kyselyn ajankohta (2022)"),
+       fill = "KYSELYN TULOS") +
   geom_vline(xintercept = dmy("03-03-2022"), linetype = 2, size = 2, alpha = 0.5) +
   annotate("text", y = 103, x = dmy("08-04-2022"), label = "\"Valeuutislaki\" astuu voimaan", size = 6) +
-  scale_fill_manual(values = c(punainen, harmaa, vihrea)) +
+  scale_fill_manual(values = c(punainen, harmaa, vihrea),
+                    labels = c("Kieltäytyi", "Keskeytti", "Vastasi loppuun asti")) +
   geom_segment(aes(x = dmy("22-03-2022"), y = 103, xend = dmy("04-03-2022"), yend = 103),
                   arrow = arrow(length = unit(0.5, "cm")))
 
@@ -850,22 +853,1044 @@ ggplot(rf_rr_n_df) +
        x = toupper("Kyselyn ajankohta (2022)"),
        fill = "KYSELYN TULOS") +
   scale_fill_manual(values = c(punainen, harmaa, vihrea),
-                    labels = c("Kieltäytyi", "Keskeytetti", "Vastasi loppuun asti")) +
+                    labels = c("Kieltäytyi", "Keskeytti", "Vastasi loppuun asti")) +
   geom_segment(aes(x = dmy("22-03-2022"), y = 32000, xend = dmy("04-03-2022"), yend = 32000),
                   arrow = arrow(length = unit(0.5, "cm")))
 
+kuva_3 <- 
 rr_p / rr_p_count +
     plot_annotation(title = toupper("VASTAUSKATO HYÖKKÄYSSOTAAN LIITTYVISSÄ KYSELYISSÄ"), 
                   subtitle = "(Russian Field)") & theme(text = element_text(family = "Times", 
                                                                                size = 20,
                                                                                face = "bold"))
 
+jpeg(here("img/kuva_3.jpg"), units = "in", width = 16, height = 14, res = 300)
+kuva_3
+dev.off()
 
-?scale_fill_manual
-
-"VASTAUSKATO HYÖKKÄYSSOTAAN LIITTYVISSÄ KYSELYISSÄ"
 
 ```
+
+# Kuva 4
+
+
+```{r}
+theme_oma2 <- function() {
+  font <- "Times"
+  theme_minimal() %+replace%
+    theme(
+      plot.title = element_text(
+        family = font,
+        size = 24,
+        face = 'bold',
+        hjust = 0,
+        vjust = 2),
+      plot.subtitle = element_text(
+                   family = font,
+                   face = 'bold',
+                   size = 14),
+      plot.caption = element_text(
+        family = font,
+        size = 14,
+        face = 'bold',
+        hjust = 1,
+        colour = "black"),
+      axis.title = element_text(
+        family = font,
+        size = 18),
+      axis.text = element_text(
+        family = font,
+        face = 'bold',
+        size = 14),
+      axis.text.x = element_text(
+        margin = margin(5, b = 10)),
+      legend.title = element_text(
+        family = font,
+        size = 10,
+        face = "bold"),
+      legend.text = element_text(
+        family = font,
+        size = 8,
+        face = "bold"),
+      axis.title.x = element_text(
+        face = "bold"
+      )
+    )
+}
+
+
+
+# Chronicles, Model 1: Import data
+chronicles <- here::here("data/Полные Хроники 5.0.sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = q21)
+
+# Chronicles, Model 1: Subset the data
+chronicles_model_1 <- chronicles %>% 
+  select(support, age, gender, tnp, edu_gr, wes_age_gender_tnp) %>% 
+  mutate(support = as.factor(
+    case_when(support == 1 ~ 1, # tukee sotaa
+              support == 2 ~ 0)), # ei tue
+    gender = as.factor(
+      case_when(gender == 2 ~ 0, # nainen
+                gender == 1 ~ 1)), # mies
+    tnp = as.factor(
+      case_when(tnp == 2 ~ 0, # kylä
+                tnp == 1 ~ 1)), # kaupunki
+    edu_gr = as.factor(
+      case_when(edu_gr == 2 ~ 1, # korkeakoulutus
+                edu_gr == 1 ~ 0)), # ei korkeakoulutusta
+    age = as.factor(
+      case_when(
+        between(age, 18, 29) ~ "18-29",
+        between(age, 30, 44) ~ "30-44",
+        between(age, 45, 59) ~ "45-59",
+        age >= 60 ~ "60 ja yli")
+    )
+    ) %>% 
+  drop_na()
+
+# Chronicles, Model 1: define design
+chronicles_model_1_design <- svydesign(ids =~ 1,
+                                  data = chronicles_model_1,
+                                  weights = chronicles_model_1$wes_age_gender_tnp)
+
+# Chronicles, Model 1: run Model 1
+chronicles_model_1 <- svyglm(formula = support ~ age + gender + tnp + edu_gr,
+                        design = chronicles_model_1_design,
+                        family = binomial(logit))
+
+# Chronicles, Model 1: Check model summary
+summary(chronicles_model_1)
+
+# Chronicles, Model 1: Confidence intervals
+chronicles_model_1_cis <- data.frame(confint(chronicles_model_1)) %>% 
+  rename(lower_ci = 1,
+         upper_ci = 2)
+# Chronicles, Model 1: Calculate Odd Ratios
+chronicles_model_1_or <- exp(cbind(coef(chronicles_model_1), confint(chronicles_model_1))) %>% 
+  as.data.frame() %>% 
+  rename(oratio = 1,
+         oratio_lower = 2,
+         oratio_upper = 3)
+# Chronicles, Model 1: Merge data
+chronicles_model_1_plot_data <- tidy(chronicles_model_1) %>% 
+  cbind(chronicles_model_1_cis, chronicles_model_1_or) %>% 
+  slice(-1)
+# Chronicles, Model 1: Pseudo R^2: Cox-Snell & Nagelkerke
+chronicles_model_1_coxsnell <- paste(round(100*psrsq(chronicles_model_1, method = "Cox-Snell"), digits = 1), "% (Cox-Snell)", sep = "")
+chronicles_model_1_nagelkerke <- paste(round(100*psrsq(chronicles_model_1, method = "Nagelkerke"), digits = 1), "% (Nagelkerke)", sep = "")
+
+
+vari_chronicles <- "#740002"
+
+# Chronicles. Model 1: Odd ratios
+kuva_4.1 <-
+  chronicles_model_1_plot_data %>%
+    ggplot(aes(x = term, y = oratio)) +
+    geom_point(size = 6, color = vari_chronicles) +
+    coord_flip() +
+    geom_errorbar(aes(ymax = oratio_upper, ymin = oratio_lower), width = 0.2, color = "grey50") +
+    theme_oma2() +
+  scale_y_log10(breaks = seq(0,10,1)) +
+  scale_x_discrete(labels = c("30–44-vuotiaat",
+                              "45–59-vuotiaat ***", 
+                              "60-vuotiaat ja vanhemmat ***", 
+                              "Korkeakoulutus", 
+                              "Sukupuoli: mies *", 
+                              "Kaupunki **")) +
+  theme(plot.title = element_text(color = vari_chronicles)) +
+  geom_hline(yintercept = 1, linetype = 2) +
+  labs(title = paste("CHRONICLES, Malli 1:", odds),
+       # subtitle = odds,
+       x = NULL,
+       y = toupper("Riskiluku (logaritminen asteikko)"),
+       caption = bquote(atop(paste(R^2, " = ", .(chronicles_model_1_coxsnell)), 
+                             paste(R^2, " = ", .(chronicles_model_1_nagelkerke)))))
+
+# Chronicles, Model 2: 
+# Chronicles, Model 2: Subset data for Model 2
+chronicles_model_2_data <- chronicles %>% 
+  mutate(tutut_ihmiset = as.factor(q8_1),
+         tv = as.factor(q8_2),
+         youtube = as.factor(q8_5),
+         en_seuraa = as.factor(q8_9),
+         internet_sivut = as.factor(q8_8),
+         telegram = as.factor(q8_6)) %>% 
+  # Model 2 variables
+  select(support, 
+         age,
+         gender,
+         tnp,
+         edu_gr,
+         wes_age_gender_tnp,
+         tutut_ihmiset,
+         tv,
+         youtube,
+         en_seuraa,
+         internet_sivut,
+         telegram) %>% 
+  mutate(support = as.factor(
+    case_when(support == 1 ~ 1, # tukee sotaa
+              support == 2 ~ 0)), # ei tue
+    gender = as.factor(
+      case_when(gender == 2 ~ 0, # nainen
+                gender == 1 ~ 1)), # mies
+    tnp = as.factor(
+      case_when(tnp == 2 ~ 0, # kylä
+                tnp == 1 ~ 1)), # kaupunki
+    edu_gr = as.factor(
+      case_when(edu_gr == 2 ~ 1, # korkeakoulutus
+                edu_gr == 1 ~ 0)), # ei korkeakoulutusta
+    age = as.factor(
+      case_when(
+        between(age, 18, 29) ~ "18-29",
+        between(age, 30, 44) ~ "30-44",
+        between(age, 45, 59) ~ "45-59",
+        age >= 60 ~ "60 ja yli"))
+    ) %>% 
+  drop_na()
+
+# Chronicles, Model 2: define design
+chronicles_model_2_design <- svydesign(ids =~ 1,
+                               data = chronicles_model_2_data,
+                               weights = chronicles_model_2_data$wes_age_gender_tnp)
+
+# Chronicles, Model 2: run the model
+chronicles_model_2 <- svyglm(formula = support ~ age + gender + tnp + edu_gr + tutut_ihmiset + tv + youtube + en_seuraa + internet_sivut + telegram,
+       design = chronicles_model_2_design,
+       family = binomial(logit))
+# Chronicles, Model 2: check the results
+summary(chronicles_model_2)
+
+# Chronicles, Model 2: Confidence intervals
+chronicles_model_2_cis <- data.frame(confint(chronicles_model_2)) %>% 
+  rename(lower_ci = 1,
+         upper_ci = 2)
+# Chronicles, Model 2: Calculate Odd Ratios
+chronicles_model_2_or <- exp(cbind(coef(chronicles_model_2), confint(chronicles_model_2))) %>% 
+  as.data.frame() %>% 
+  rename(oratio = 1,
+         oratio_lower = 2,
+         oratio_upper = 3)
+# Chronicles, Model 2: Merge data
+chronicles_model_2_plot_data <- tidy(chronicles_model_2) %>% 
+  cbind(chronicles_model_2_cis, chronicles_model_2_or) %>% 
+  slice(-1)
+
+# Chronicles, Model 2:  Pseudo R^2: Cox-Snell & Nagelkerke
+chronicles_model_2_coxsnell <- paste(round(100*psrsq(chronicles_model_2, method = "Cox-Snell"), digits = 1), "% (Cox-Snell)", sep = "")
+chronicles_model_2_nagelkerke <- paste(round(100*psrsq(chronicles_model_2, method = "Nagelkerke"), digits = 1), "% (Nagelkerke)", sep = "")
+
+# Chronicles. Model 2: Odd ratios
+kuva_4.2 <- 
+  chronicles_model_2_plot_data %>%
+    ggplot(aes(x = term, y = oratio)) +
+    geom_point(size = 6, color = vari_chronicles) +
+    coord_flip() +
+    geom_errorbar(aes(ymax = oratio_upper, ymin = oratio_lower), width = 0.2, color = "grey50") +
+    theme_oma2() +
+  scale_y_log10(breaks = seq(0,9,1)) +
+  scale_x_discrete(labels = c("30–44-vuotiaat",
+                              "45–59-vuotiaat *",
+                              "60-vuotiaat ja vanhemmat",
+                              "Korkeakoulutus",
+                              "Tiedonlähde: Ei seuraa tapahtumia",
+                              "Sukupuoli",
+                              "Tiedonlähde: Internet-sivut",
+                              "Tiedonlähde: Telegram",
+                              "Kaupunki *",
+                              "Tiedonlähde: Tutut ihmiset *",
+                              "Tiedonlähde: TV ***",
+                              "Tiedonlähde: YouTube ***")) +
+  theme(plot.title = element_text(color = vari_chronicles)) +
+  geom_hline(yintercept = 1, linetype = 2) +
+  labs(title = paste("CHRONICLES, Malli 2:", odds),
+       x = NULL,
+       y = toupper("Riskiluku (logaritminen asteikko)"),
+       caption = bquote(atop(paste(R^2, " = ", .(chronicles_model_2_coxsnell)), 
+                             paste(R^2, " = ", .(chronicles_model_2_nagelkerke)))))
+
+# Chronicles. Model 3: Define variables
+chronicles <- chronicles %>% 
+  mutate(tutut_ihmiset = as.factor(q8_1),
+         tv = as.factor(q8_2),
+         youtube = as.factor(q8_5),
+         en_seuraa = as.factor(q8_9),
+         internet_sivut = as.factor(q8_8),
+         telegram = as.factor(q8_6),
+         perhe_tulot = as.factor(q4_2),
+         maan_asiat = as.factor(q9),
+         sukul_osallist = as.factor(q6),
+         perhe_mat_tilanne = as.factor(q10),
+         tyo_lomautus = q4_1,
+         perhe_varautuminen = q4_3)
+
+# Chronicles, Model 3: Subset the data
+chronicles_model_3_data <- chronicles %>% 
+  select(support, age, gender, tnp, edu_gr, wes_age_gender_tnp, tutut_ihmiset, tv, youtube, en_seuraa, internet_sivut, telegram, perhe_tulot, maan_asiat, sukul_osallist, perhe_mat_tilanne, tyo_lomautus, perhe_varautuminen) %>% 
+  mutate(support = as.factor(
+    case_when(support == 1 ~ 1, # tukee sotaa
+              support == 2 ~ 0)), # ei tue
+    gender = as.factor(
+      case_when(gender == 2 ~ 0, # nainen
+                gender == 1 ~ 1)), # mies
+    tnp = as.factor(
+      case_when(tnp == 2 ~ 0, # kylä
+                tnp == 1 ~ 1)), # kaupunki
+    edu_gr = as.factor(
+      case_when(edu_gr == 2 ~ 1, # korkeakoulutus
+                edu_gr == 1 ~ 0)),
+    perhe_tulot = as.factor(
+        case_when(perhe_tulot == 1 ~ 2, # tulot pienentyneet
+                  perhe_tulot == 2 ~ 1)), # tulot eivät pienentyneet
+    maan_asiat = as.factor(
+      case_when(maan_asiat == 4 ~ 1, # ehdottomasti oikeaan suuntaan
+                maan_asiat == 3 ~ 2, # ennemmin oikeaan suuntaan
+                maan_asiat == 2 ~ 3, # ennemmin väärään suuntaan
+                maan_asiat == 1 ~ 4)), # ehdottomasti väärään suuntaan
+    sukul_osallist = as.factor(
+      case_when(sukul_osallist == 1 ~ 2, # osallistunut
+                sukul_osallist == 2 ~ 1)), # ei osallistunut
+    age = as.factor(
+      case_when(
+        between(age, 18, 29) ~ "18-29",
+        between(age, 30, 44) ~ "30-44",
+        between(age, 45, 59) ~ "45-59",
+        age >= 60 ~ "60 ja yli")),
+    tyo_lomautus = as.factor(
+        case_when(tyo_lomautus == 1 ~ 2, # lomautettu töistä
+                  tyo_lomautus == 2 ~ 1)),
+    perhe_varautuminen = as.factor(
+        case_when(perhe_varautuminen == 1 ~ 2, # perhe varautunut materiaalisesti: kyllä
+                  perhe_varautuminen == 2 ~ 1))) %>% 
+  drop_na()
+
+# Chronicles. Model 3: define design
+chronicles_model_3_design <- svydesign(ids =~ 1,
+                                  data = chronicles_model_3_data,
+                                  weights = chronicles_model_3_data$wes_age_gender_tnp)
+# Chronicles. Model 3: run the model
+chronicles_model_3 <- svyglm(formula = support ~ age + gender + tnp + edu_gr + tutut_ihmiset + tv + youtube + en_seuraa + internet_sivut + telegram + perhe_tulot + sukul_osallist + tyo_lomautus + perhe_varautuminen,
+       design = chronicles_model_3_design,
+       family = binomial(logit))
+# Chronicles. Model 3: print the results
+summary(chronicles_model_3)
+
+# Chronicles. Model 3: Confidence intervals
+chronicles_model_3_cis <- data.frame(confint(chronicles_model_3)) %>% 
+  rename(lower_ci = 1,
+         upper_ci = 2)
+
+# Chronicles. Model 3: Calculate Odd Ratios
+chronicles_model_3_or <- exp(cbind(coef(chronicles_model_3), confint(chronicles_model_3))) %>% 
+  as.data.frame() %>% 
+  rename(oratio = 1,
+         oratio_lower = 2,
+         oratio_upper = 3)
+
+# Chronicles. Model 3: plot data
+chronicles_model_3_plot_data <- tidy(chronicles_model_3) %>% 
+  cbind(chronicles_model_3_cis, chronicles_model_3_or) %>% 
+  slice(-1) %>%
+  mutate(term = as.factor(term))
+
+# Chronicles. Model 3: Pseudo R^2: Cox-Snell & Nagelkerke
+chronicles_model_3_coxsnell <- paste(round(100*psrsq(chronicles_model_3, method = "Cox-Snell"), digits = 1), "% (Cox-Snell)", sep = "")
+chronicles_model_3_nagelkerke <- paste(round(100*psrsq(chronicles_model_3, method = "Nagelkerke"), digits = 1), "% (Nagelkerke)", sep = "")
+
+# Chronicles, Model 3: Odd ratios plot
+kuva_4.3 <- 
+  chronicles_model_3_plot_data %>% 
+  ggplot(aes(x = term, y = oratio)) +
+  geom_point(size = 6, color = vari_chronicles) +
+  coord_flip() +
+  scale_y_log10(breaks = seq(0,11,1)) +
+  geom_errorbar(aes(ymax = oratio_upper, ymin = oratio_lower), width = 0.2, color = "grey50") +
+  theme_oma2() +
+  theme(plot.title = element_text(color = vari_chronicles)) +
+  geom_hline(yintercept = 1, linetype = 2) +
+  labs(title = paste("CHRONICLES, Malli 3:", odds),
+       x = NULL,
+       y = toupper("Riskiluku (logaritminen asteikko)"),
+       caption = bquote(atop(paste(R^2, " = ", .(chronicles_model_3_coxsnell)), 
+                             paste(R^2, " = ", .(chronicles_model_3_nagelkerke))))) +
+       scale_x_discrete(labels = c("30–44-vuotiaat",
+                              "45–59-vuotiaat *",
+                              "60-vuotiaat ja vanhemmat",
+                              "Korkeakoulutus",
+                              "Tiedonlähde: Ei seuraa tapahtumia",
+                              "Sukupuoli: mies",
+                              "Tiedonlähde: Internet-sivut",
+                              "Perheen tulot vähentyneet ***",
+                              "Perhe ostanut ruokaa ja päivittäistarpeita varalle **",
+                              "Sukulaisia tai perheenjäseniä osallistunut sotaan",
+                              "Tiedonlähde: Telegram",
+                              "Kaupunki *",
+                              "Tiedonlähde: Tutut ihmiset **",
+                              "Tiedonlähde: TV ***",
+                              "Irtisanottu töistä **",
+                              "Tiedonlähde: YouTube ***"))
+  
+kuva_4 <- 
+  kuva_4.1 /
+  kuva_4.2 /
+  kuva_4.3
+
+jpeg(here("img/kuva_4.jpg"), units = "in", width = 16, height = 18, res = 300)
+kuva_4
+dev.off()
+
+```
+
+# Kuva 5
+
+```{r}
+# Russian Field, Model 1: import the data
+rf <- here::here("data/МАССИВ SPSS Russian Field - _Россия-Украина_ (всероссийский телефонный опрос, 1600, 5-7 марта).sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = q5,
+         ika = q3,
+         sukupuoli = q2,
+         tv = as.factor(q8_1),
+         valt_printtimedia = as.factor(q8_2),
+         valt_media_nettisivut = as.factor(q8_3),
+         radio = as.factor(q8_4),
+         sanomalehdet = as.factor(q8_5),
+         valt_nettisivut = as.factor(q8_6),
+         vkontakte = as.factor(q8_7),
+         odnoklassiki = as.factor(q8_8),
+         facebook = as.factor(q8_9),
+         instagram = as.factor(q8_10),
+         twitter = as.factor(q8_11),
+         yandex_google = as.factor(q8_12),
+         youtube = as.factor(q8_13),
+         telegram = as.factor(q8_14),
+         whatsapp = as.factor(q8_15),
+         viber = as.factor(q8_16),
+         tutut = as.factor(q8_17),
+         muut = as.factor(q8_18),
+         en_seuraa = as.factor(q8_19))
+
+# Russian Field, Model 1: subset the data
+rf_model_1_data <- rf %>% 
+  select(support:en_seuraa, vtpv) %>% 
+  mutate(
+  support = as.factor(
+    case_when(support %in% c(1, 2) ~ 1,
+              support %in% c(3, 4) ~ 0)),
+  sukupuoli = as.factor(
+    case_when(sukupuoli == 1 ~ 1, # mies
+              sukupuoli == 2 ~ 0)), # nainen
+  ika = as.factor(ika)) %>% 
+  drop_na()
+
+# Russian Field, Model 1: define weights
+rf_model_1_design <- svydesign(ids =~ 1,
+                               data = rf_model_1_data,
+                               weights = rf_model_1_data$vtpv)
+
+# Russian Field, Model 1: run the model
+rf_model_1 <- svyglm(support ~ ika + sukupuoli + tv + youtube + telegram + tutut + yandex_google + valt_nettisivut + valt_media_nettisivut + vkontakte,
+       design = rf_model_1_design,
+       family = binomial(logit))
+
+# Russian Field, Model 1: print the results
+summary(rf_model_1)
+
+# Russian Field, Model 1:  Confidence intervals
+rf_model_1_cis <- data.frame(confint(rf_model_1)) %>% 
+  rename(lower_ci = 1,
+         upper_ci = 2)
+# Russian Field, Model 1:  Calculate Odd Ratios
+rf_model_1_or <- exp(cbind(coef(rf_model_1), confint(rf_model_1))) %>% 
+  as.data.frame() %>% 
+  rename(oratio = 1,
+         oratio_lower = 2,
+         oratio_upper = 3)
+
+# Russian Field, Model 1: data for plot
+rf_model_1_plot_data <- tidy(rf_model_1) %>% 
+  cbind(rf_model_1_cis, rf_model_1_or) %>% 
+  slice(-1) %>%
+  mutate(term = as.factor(term))
+
+# Russian Field, Model 1:  Pseudo R^2: Cox-Snell & Nagelkerke
+rf_model_1_coxsnell <- paste(round(100*psrsq(rf_model_1, method = "Cox-Snell"), digits = 1), "% (Cox-Snell)", sep = "")
+rf_model_1_nagelkerke <- paste(round(100*psrsq(rf_model_1, method = "Nagelkerke"), digits = 1), "% (Nagelkerke)", sep = "")
+# Russian Field, Model 1: plot X-axis labels
+rf_model_1_labels <- c("30–44-vuotiaat **",
+                       "45–59-vuotiaat ***",
+                       "60-vuotiaat ja vanhemmat",
+                       "Sukupuoli: mies *",
+                       "Tiedonlähde: Telegram",
+                       "Tiedonlähde: Tutut ihmiset",
+                       "Tiedonlähde: TV ***",
+                       "Tiedonlähde: Valtionmedian nettisivut *",
+                       "Tiedonlähde: Valtioelinten nettisivut *",
+                       "Tiedonlähde: VKontakte",
+                       "Tiedonlähde: Yandex tai Google",
+                       "Tiedonlähde: YouTube ***")
+# Russian Field, Model 1:  Regression coefficients plot
+rf_model_1_coefs_plot <-
+  rf_model_1_plot_data %>% 
+  ggplot(aes(x = term, y = estimate)) +
+  geom_point(size = 3.5) +
+  coord_flip() +
+  ylim(-1.5, 1.5) +
+  geom_errorbar(aes(ymax = upper_ci, ymin = lower_ci), width = 0.2, color = "grey50") +
+  theme_bw() +
+  theme(text = element_text(family = "Times",
+                            face = "bold",
+                            size = 14)) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  labs(title = "Russian Field: Malli 1 ",
+       subtitle = coefs,
+       x = NULL,
+       y = "Regressiokerroin") +
+    scale_x_discrete(labels = rf_model_1_labels)
+
+vari_rf <- "#1189E6"
+  
+# Russian Field, Model 1: Odd ratios plot
+kuva_5.1 <- 
+  rf_model_1_plot_data %>% 
+  ggplot(aes(x = term, y = oratio)) +
+  geom_point(size = 6, color = vari_rf) +
+  coord_flip() +
+  scale_y_log10(breaks = seq(0, 4, 1)) +
+  geom_errorbar(aes(ymax = oratio_upper, ymin = oratio_lower), width = 0.2, color = "grey50") +
+  theme_oma2() +
+  theme(plot.title = element_text(color = vari_rf)) +
+  geom_hline(yintercept = 1, linetype = 2) +
+  labs(title = paste("RUSSIAN FIELD, Malli 1:", odds),
+       x = NULL,
+       y = toupper("Riskiluku (logaritminen asteikko)"),
+       caption = bquote(atop(paste(R^2, " = ", .(rf_model_1_coxsnell)), 
+                             paste(R^2, " = ", .(rf_model_1_nagelkerke))))) +
+  scale_x_discrete(labels = rf_model_1_labels)
+
+  
+# Russian Field, Model 2:  
+rf_model_2_data <- rf %>% 
+  mutate(
+  support = as.factor(
+    case_when(support %in% c(1, 2) ~ 1,
+              support %in% c(3, 4) ~ 0)),
+  sukupuoli = as.factor(
+    case_when(sukupuoli == 1 ~ 1, # mies
+              sukupuoli == 2 ~ 0)), # nainen
+  ika = as.factor(ika),
+  sanktio_henk_koht = as.factor(q9_1),
+  sanktio_perhe = as.factor(q9_2),
+  sanktio_ystavat = as.factor(q9_3),
+  sanktio_ei_vaikutusta = as.factor(q9_4),
+  talous_nakyma = as.factor(
+    case_when(q11 == 1 ~ 4, # tulot lisääntyvät
+              q11 == 2 ~ 3, # tulot pysyvät ennallaan
+              q11 == 3 ~ 2, # tulot pienentyvät merkittävästi
+              q11 == 4 ~ 1)), # menetän tulonlähteeni
+  talous_tilanne = as.factor(
+    case_when(q12 == 1 ~ 1, # rahat eivät riitä elintarvikkeisiin
+              q12 == 2 ~ 2, # rahat riittävät vaivoin vaatteisiin
+              q12 == 3 ~ 3, # rahat riittävät ruokaan ja vaatteisiin, mutta vaivoin kodinkoneisiin
+              q12 == 4 ~ 4, # rahat riittävät kodinkoneisiin, mutta ei muuhun
+              q12 == 5 ~ 5)) # rahat riittävät käytännössä kaikkeen
+  ) %>% 
+  select(support:talous_tilanne, vtpv) %>% 
+  drop_na()
+
+# Russian Field, Model 2:  define weights
+rf_model_2_design <- svydesign(ids =~ 1,
+                               data = rf_model_2_data,
+                               weights = rf_model_2_data$vtpv)
+
+# Russian Field, Model 2:  run the model
+rf_model_2 <- svyglm(support ~ ika + sukupuoli + tv + youtube + telegram + tutut + yandex_google + valt_nettisivut + valt_media_nettisivut + vkontakte + sanktio_henk_koht + sanktio_ystavat + sanktio_perhe + sanktio_ei_vaikutusta,
+       design = rf_model_2_design,
+       family = binomial(logit))
+# Russian Field, Model 2: print the results
+summary(rf_model_2)
+
+# Russian Field, Model 2: Confidence intervals
+rf_model_2_cis <- data.frame(confint(rf_model_2)) %>% 
+  rename(lower_ci = 1,
+         upper_ci = 2)
+# Russian Field, Model 2: Calculate Odd Ratios
+rf_model_2_or <- exp(cbind(coef(rf_model_2), confint(rf_model_2))) %>% 
+  as.data.frame() %>% 
+  rename(oratio = 1,
+         oratio_lower = 2,
+         oratio_upper = 3)
+
+# Russian Field, Model 2: data for plot
+rf_model_2_plot_data <- tidy(rf_model_2) %>% 
+  cbind(rf_model_2_cis, rf_model_2_or) %>% 
+  slice(-1) %>%
+  mutate(term = as.factor(term))
+
+# Russian Field, Model 2:  Pseudo R^2: Cox-Snell & Nagelkerke
+rf_model_2_coxsnell <- paste(round(100*psrsq(rf_model_2, method = "Cox-Snell"), digits = 1), "% (Cox-Snell)", sep = "")
+rf_model_2_nagelkerke <- paste(round(100*psrsq(rf_model_2, method = "Nagelkerke"), digits = 1), "% (Nagelkerke)", sep = "")
+# Russian Field, Model 2: X-axis labels
+rf_model_2_labels <- c("30–44-vuotiaat **",
+                       "45–59-vuotiaat **",
+                       "60-vuotiaat ja vanhemmat",
+                       "Sanktiot: ei vaikutusta *",
+                       "Sanktiot: vaikuttaneet henkilökohtaisesti **",
+                       "Sanktiot: vaikuttaneet perheeseen",
+                       "Sanktiot: vaikuttaneet ystäviin",
+                       "Sukupuoli: mies *",
+                       "Tiedonlähde: Telegram",
+                       "Tiedonlähde: tutut ihmiset",
+                       "Tiedonlähde: TV ***",
+                       "Tiedonlähde: Valtionmedian nettisivut *",
+                       "Tiedonlähde: Valtioelinten nettisivut **",
+                       "Tiedonlähde: VKontakte",
+                       "Tiedonlähde: Yandex tai Google",
+                       "Tiedonlähde: YouTube **")
+# Russian Field, Model 2: Regression coefficients plot
+rf_model_2_coefs_plot <-
+  rf_model_2_plot_data %>% 
+  ggplot(aes(x = term, y = estimate)) +
+  geom_point(size = 3.5) +
+  coord_flip() +
+  ylim(-1.5, 1.5) +
+  geom_errorbar(aes(ymax = upper_ci, ymin = lower_ci), width = 0.2, color = "grey50") +
+  theme_bw() +
+  theme(text = element_text(family = "Times",
+                            face = "bold",
+                            size = 14)) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  labs(title = "Russian Field: Malli 2 ",
+       subtitle = coefs,
+       x = NULL,
+       y = "Regressiokerroin") +
+    scale_x_discrete(labels = rf_model_2_labels)
+
+# Russian Field, Model 2: Odd ratios plot
+kuva_5.2 <-
+rf_model_2_plot_data %>% 
+  ggplot(aes(x = term, y = oratio)) +
+  geom_point(size = 6, color = vari_rf) +
+  coord_flip() +
+  scale_y_log10(breaks = seq(1, 80, 1)) +
+  geom_errorbar(aes(ymax = oratio_upper, ymin = oratio_lower), width = 0.2, color = "grey50") +
+  theme_oma2() +
+  theme(plot.title = element_text(color = vari_rf)) +
+  geom_hline(yintercept = 1, linetype = 2) +
+  labs(title = paste("RUSSIAN FIELD, Malli 2:", odds),
+       x = NULL,
+       y = toupper("Riskiluku (logaritminen asteikko)"),
+       caption = bquote(atop(paste(R^2, " = ", .(rf_model_2_coxsnell)),
+                      paste(R^2, " = ", .(rf_model_2_nagelkerke))))) +
+  scale_x_discrete(labels = rf_model_2_labels)
+
+kuva_5 <- 
+  kuva_5.1 /
+  kuva_5.2
+
+jpeg(here("img/kuva_5.jpg"), units = "in", width = 16, height = 18, res = 300)
+kuva_5
+dev.off()
+
+
+```
+
+# Kuva 6
+
+
+```{r}
+# February 1
+vtsiom_1 <- here("data/База_Спецоперация (25.02).sav") %>% 
+  read_spss() %>% 
+  clean_names()
+# February 2
+vtsiom_2 <- here("data/База_Спецоперация (27.02).sav") %>% 
+  read_spss() %>% 
+  clean_names()
+# March 1
+vtsiom_3 <- here("data/ § _‘‚ (17.03).sav") %>% 
+  read_spss() %>% 
+  clean_names()
+# March 2
+vtsiom_4 <- here("data/ § _‘‚ (24.03)  3.sav") %>% 
+  read_spss() %>% 
+  clean_names()
+# May
+vtsiom_5 <- here("data/База_СВО++ (26.05.2022).sav") %>% 
+  read_spss() %>% 
+  clean_names()
+# June
+vtsiom_6 <- here("data/База СВО (25.06.2022).sav") %>% 
+  haven::read_spss() %>% 
+  clean_names()
+
+# VTSIOM, Model 1: Subset the datasets for Model 1
+vtsiom_1_model_1 <- vtsiom_1 %>%
+  select(vo4, sex, age, edu, tip, weight1) %>% 
+  rename(support = vo4)
+
+vtsiom_2_model_1 <- vtsiom_2 %>%
+  select(vo4, sex, age, edu, tip, weight1) %>% 
+  rename(support = vo4)
+
+vtsiom_3_model_1 <- vtsiom_3 %>%
+  select(q2, sex, age, edu, tip, weight1) %>% 
+  rename(support = q2)
+
+vtsiom_4_model_1 <- vtsiom_4 %>%
+  select(q1, sex, age, edu, tip, weight1) %>% 
+  rename(support = q1)
+
+vtsiom_5_model_1 <- vtsiom_5 %>%
+  select(vo4, sex, age, edu, tip, weight1) %>% 
+  rename(support = vo4)
+
+vtsiom_6_model_1 <- vtsiom_6 %>%
+  select(vo4, sex, age, edu, tip, weight1) %>% 
+  rename(support = vo4)
+
+# VTSIOM, Model 1: Merge data
+vtsiom_model_1_data <- rbind(vtsiom_1_model_1, 
+                             vtsiom_2_model_1,
+                             vtsiom_3_model_1,
+                             vtsiom_4_model_1,
+                             vtsiom_5_model_1,
+                             vtsiom_6_model_1)
+
+# VTSIOM, Model 1: recode variables
+vtsiom_model_1_data <- vtsiom_model_1_data %>% 
+  mutate(
+    ika = as.factor(
+      case_when(
+        between(age, 18, 29) ~ "18-29",
+        between(age, 30, 44) ~ "30-44",
+        between(age, 45, 59) ~ "45-59",
+        age >= 60 ~ "60 ja yli")),
+    support = as.factor(
+      case_when(
+        support == 1 ~ 1, # tukee
+        support == 2 ~ 0)), # ei tue
+    sukupuoli = as.factor(
+      case_when(
+        sex == 1 ~ 1, # mies
+        sex == 2 ~ 0)), # nainen
+    koulutus = as.factor(
+      case_when(
+        edu %in% c(5, 6) ~ 1, # korkeakoulutettu
+        edu %in% c(1, 2, 3, 4) ~ 0)), # ei korkeakoulutettu
+    asuinpaikka = as.factor(
+      case_when(tip == 1 ~ 7, # Miljoonakaupunki
+                tip == 2 ~ 6, # 500,000-950,000 asukasta
+                tip == 3 ~ 5, # 100,000-500,000 asukasta
+                tip == 4 ~ 4, # 50,000-100,000 asukasta
+                tip == 5 ~ 3, # alle 50,000 asukasta
+                tip == 6 ~ 2, # kaupungin tapainen taajama
+                tip == 7 ~ 1)) # kylä
+    ) %>% 
+  select(support, ika, sukupuoli, asuinpaikka, koulutus, weight1) %>% 
+  drop_na()
+# VTSIOM, Model 1: define design
+vtsiom_model_1_design <- svydesign(ids =~ 1,
+                                   data = vtsiom_model_1_data,
+                                   weights = vtsiom_model_1_data$weight1)
+# VTSIOM, Model 1: run the model
+vtsiom_model_1 <- svyglm(support ~ ika + sukupuoli + asuinpaikka + koulutus,
+                         design = vtsiom_model_1_design,
+                         family = binomial(logit))
+# VTSIOM, Model 1: print the results
+summary(vtsiom_model_1)
+
+# VTSIOM, Model 1:  Confidence intervals
+vtsiom_model_1_cis <- data.frame(confint(vtsiom_model_1)) %>% 
+  rename(lower_ci = 1,
+         upper_ci = 2)
+# VTSIOM, Model 1:  Calculate Odd Ratios
+vtsiom_model_1_or <- exp(cbind(coef(vtsiom_model_1), confint(vtsiom_model_1))) %>% 
+  as.data.frame() %>% 
+  rename(oratio = 1,
+         oratio_lower = 2,
+         oratio_upper = 3)
+# VTSIOM, Model 1: data for plot
+vtsiom_model_1_plot_data <- tidy(vtsiom_model_1) %>% 
+  cbind(vtsiom_model_1_cis, vtsiom_model_1_or) %>% 
+  slice(-1) %>%
+  mutate(term = as.factor(term))
+
+# VTSIOM, Model 1:  Pseudo R^2: Cox-Snell & Nagelkerke
+vtsiom_model_1_coxsnell <- paste(round(100*psrsq(vtsiom_model_1, method = "Cox-Snell"), digits = 1), "% (Cox-Snell)", sep = "")
+vtsiom_model_1_nagelkerke <- paste(round(100*psrsq(vtsiom_model_1, method = "Nagelkerke"), digits = 1), "% (Nagelkerke)", sep = "")
+
+# VTSIOM, Model 1: plot labels
+vtsiom_model_1_labels <- c("Kaupungin tapainen taajama",
+                           "Alle 50,000 asukkaan kaupunki *",
+                           "50,000–100,000 asukkaan kaupunki",
+                           "100,000–500,000 asukkaan kaupunki ***",
+                           "500,000–950,000 asukkaan kaupunki ***",
+                           "Miljoonakaupunki ***",
+                           "30–44-vuotiaat ***",
+                           "45–59-vuotiaat ***",
+                           "60-vuotiaat ja vanhemmat ***",
+                           "Korkeakoulutettu ***",
+                           "Sukupuoli: mies **")
+# VTSIOM, Model 1: regression coefficients plot
+vtsiom_model_1_coefs_plot <- 
+  vtsiom_model_1_plot_data %>% 
+  ggplot(aes(x = term, y = estimate)) +
+  geom_point(size = 3.5) +
+  coord_flip() +
+  ylim(-2.5, 2.5) +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2, color = "grey50") +
+  theme_bw() +
+  theme(text = element_text(family = "Times",
+                            face = "bold",
+                            size = 14)) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  labs(title = "VTsIOM: Malli 1",
+       subtitle = coefs,
+       x = NULL,
+       y = "Regressiokerroin") +
+  scale_x_discrete(labels = vtsiom_model_1_labels)
+
+# VTSIOM, Model 1: Odd ratios plot
+vtsiom_model_1_ors_plot <-
+  vtsiom_model_1_plot_data %>% 
+  ggplot(aes(x = term, y = oratio)) +
+  geom_point(size = 3.5) +
+  coord_flip() +
+  scale_y_log10(breaks = seq(0, 10, 1)) +
+  geom_errorbar(aes(ymin = oratio_lower, ymax = oratio_upper), width = 0.2, color = "grey50") +
+  theme_bw() +
+  theme(text = element_text(family = "Times",
+                            face = "bold",
+                            size = 14)) +
+  geom_hline(yintercept = 1, linetype = 2) +
+  labs(title = NULL,
+       subtitle = odds,
+       x = NULL,
+       y = "Riskiluku (logaritminen asteikko)",
+       caption = bquote(atop(paste(R^2, " = ", .(vtsiom_model_1_coxsnell)),
+                             paste(R^2, " = ", .(vtsiom_model_1_nagelkerke))))) +
+  scale_x_discrete(labels = NULL)
+
+# VTSIOM, Model 1: combine coeffients and odd ratios plots
+vtsiom_model_1_plot <- vtsiom_model_1_coefs_plot + vtsiom_model_1_ors_plot
+# VTSIOM, Model 1: print the model plot
+vtsiom_model_1_plot
+
+# VTSIOM, Model 2: Subset the datasets for Model 2
+vtsiom_1_model_2 <- vtsiom_1 %>%
+  select(vo4, sex, age, edu, tip, tv, d1, dohod_0, weight1) %>% 
+  rename(support = vo4,
+         internet_kaytto = d1,
+         perhe_tulot = dohod_0)
+
+vtsiom_2_model_2 <- vtsiom_2 %>%
+  select(vo4, sex, age, edu, tip, tv, d1, dohod_0, weight1) %>% 
+  rename(support = vo4,
+         internet_kaytto = d1,
+         perhe_tulot = dohod_0)
+
+vtsiom_3_model_2 <- vtsiom_3 %>%
+  select(q2, sex, age, edu, tip, tv, d1, dohod_0, weight1) %>% 
+  rename(support = q2,
+         internet_kaytto = d1,
+         perhe_tulot = dohod_0)
+
+vtsiom_4_model_2 <- vtsiom_4 %>%
+  select(q1, sex, age, edu, tip, tv, d1, dohod_0, weight1) %>% 
+  rename(support = q1,
+         internet_kaytto = d1,
+         perhe_tulot = dohod_0)
+
+vtsiom_5_model_2 <- vtsiom_5 %>%
+  select(vo4, sex, age, edu, tip, tv, d1, dohod_0, weight1) %>% 
+  rename(support = vo4,
+         internet_kaytto = d1,
+         perhe_tulot = dohod_0)
+
+vtsiom_6_model_2 <- vtsiom_6 %>%
+  select(vo4, sex, age, edu, tip, tv, d1, dohod_0, weight1) %>% 
+  rename(support = vo4,
+         internet_kaytto = d1,
+         perhe_tulot = dohod_0)
+
+# VTSIOM, Model 2: Merge datasets
+vtsiom_model_2_data <- rbind(vtsiom_1_model_2, 
+                             vtsiom_2_model_2,
+                             vtsiom_3_model_2,
+                             vtsiom_4_model_2,
+                             vtsiom_5_model_2,
+                             vtsiom_6_model_2)
+# VTSIOM, Model 2: data tranform
+vtsiom_model_2_data <-
+  vtsiom_model_2_data %>% 
+  mutate(
+    ika = as.factor(
+      case_when(
+        between(age, 18, 29) ~ "18-29",
+        between(age, 30, 44) ~ "30-44",
+        between(age, 45, 59) ~ "45-59",
+        age >= 60 ~ "60 ja yli")),
+    support = as.factor(
+      case_when(
+        support == 1 ~ 1, # tukee
+        support == 2 ~ 0)), # ei tue
+    sukupuoli = as.factor(
+      case_when(
+        sex == 1 ~ 1, # mies
+        sex == 2 ~ 0)), # nainen
+    koulutus = as.factor(
+      case_when(
+        edu %in% c(5, 6) ~ 1, # korkeakoulutettu
+        edu %in% c(1, 2, 3, 4) ~ 0)), # ei korkeakoulutettu
+    asuinpaikka = as.factor(
+      case_when(tip == 1 ~ 7, # Miljoonakaupunki
+                tip == 2 ~ 6, # 500,000-950,000 asukasta
+                tip == 3 ~ 5, # 100,000-500,000 asukasta
+                tip == 4 ~ 4, # 50,000-100,000 asukasta
+                tip == 5 ~ 3, # alle 50,000 asukasta
+                tip == 6 ~ 2, # kaupungin tapainen taajama
+                tip == 7 ~ 1)), # kylä
+    tv = as.factor(
+      case_when(tv == 1 ~ 6, # päivittäin yli 4 tuntia
+                tv == 2 ~ 5, # päivittäin alle 4 tuntia
+                tv == 3 ~ 4, # pari kertaa viikossa
+                tv == 4 ~ 3, # pari kertaa kuukaudessa
+                tv == 5 ~ 2, # harvoin, mutta useammin kuin kerran puolessa vuodessa
+                tv == 6 ~ 1)), # en katso TV:tä
+    internet_kaytto = as.factor(
+      case_when(internet_kaytto == 1 ~ 6, # päivittäin yli 4h 
+                internet_kaytto == 2 ~ 5, # päivittäin alle 4h
+                internet_kaytto == 3 ~ 4, # pari kertaa viikossa
+                internet_kaytto == 4 ~ 3, # pari kertaa kuukaudessa
+                internet_kaytto == 5 ~ 2, # harvoin, mutta 
+                internet_kaytto == 96 ~ 1)), # en käytä nettiä
+    perhe_tulot = as.factor(
+      case_when(perhe_tulot == 1 ~ 5, # todella hyvä
+                perhe_tulot == 2 ~ 4, # hyvä
+                perhe_tulot == 3 ~ 3, # keskinkertainen
+                perhe_tulot == 4 ~ 2, # huono
+                perhe_tulot == 5 ~ 1)) # todella huono
+  ) %>% 
+    select(support, ika, sukupuoli, koulutus, asuinpaikka, tv, internet_kaytto, perhe_tulot, weight1) %>% 
+    drop_na()
+
+# VTSIOM, Model 2: Define weights
+vtsiom_model_2_design <- svydesign(ids =~ 1,
+                                   data = vtsiom_model_2_data,
+                                   weights = vtsiom_model_2_data$weight1)
+
+# VTSIOM, Model 2: Define model
+vtsiom_model_2 <- svyglm(support ~ ika + sukupuoli + koulutus + asuinpaikka + tv + internet_kaytto + perhe_tulot,
+                         design = vtsiom_model_2_design,
+                         family = binomial(logit))
+# VTSIOM, Model 2: print the results
+summary(vtsiom_model_2)
+
+# VTSIOM, Model 2: Confidence intervals
+vtsiom_model_2_cis <- data.frame(confint(vtsiom_model_2)) %>% 
+  rename(lower_ci = 1,
+         upper_ci = 2)
+# VTSIOM, Model 2: Calculate Odd Ratios
+vtsiom_model_2_or <- exp(cbind(coef(vtsiom_model_2), confint(vtsiom_model_2))) %>% 
+  as.data.frame() %>% 
+  rename(oratio = 1,
+         oratio_lower = 2,
+         oratio_upper = 3)
+
+# VTSIOM, Model 2: data for plot
+vtsiom_model_2_plot_data <- tidy(vtsiom_model_2) %>% 
+  cbind(vtsiom_model_2_cis, vtsiom_model_2_or) %>% 
+  slice(-1) %>%
+  mutate(term = as.factor(term))
+
+# VTSIOM, Model 2: Pseudo R^2: Cox-Snell & Nagelkerke
+vtsiom_model_2_coxsnell <- paste(round(100*psrsq(vtsiom_model_2, method = "Cox-Snell"), digits = 1), "% (Cox-Snell)", sep = "")
+
+vtsiom_model_2_nagelkerke <- paste(round(100*psrsq(vtsiom_model_2, method = "Nagelkerke"), digits = 1), "% (Nagelkerke)", sep = "")
+
+# VTSIOM, Model 2: plot labels
+vtsiom_model_2_labels <- c("Kaupungin tapainen taajama",
+                           "Alle 50,000 asukkaan kaupunki",
+                           "50,000–100,000 asukkaan kaupunki",
+                           "100,000–500,000 asukkaan kaupunki *",
+                           "500,000–950,000 asukkaan kaupunki *",
+                           "Miljoonakaupunki ***",
+                           "30–44-vuotiaat ***",
+                           "45–59-vuotiaat ***",
+                           "60-vuotiaat ja vanhemmat ***",
+                           "Internetin käyttö: harvoin",
+                           "Internetin käyttö: muutama kerta kuussa",
+                           "Internetin käyttö: muutama kerta viikossa",
+                           "Internetin käyttö: päivittäin alle 4h",
+                           "Internetin käyttö: päivittäin yli 4h",
+                           "Korkeakoulutettu *",
+                           "Perheen taloustilanne: huono **",
+                           "Perheen taloustilanne: keskinkertainen ***",
+                           "Perheen taloustilanne: hyvä ***",
+                           "Perheen taloustilanne: erittäin hyvä ***",
+                           "Sukupuoli: mies ***",
+                           "TV:n katselu: harvoin",
+                           "TV:n katselu: muutama kerta kuussa **",
+                           "TV:n katselu: muutama kerta viikossa ***",
+                           "TV:n katselu: päivittäin alle 4h ***",
+                           "TV:n katselu: päivittäin yli 4h ***")
+
+# VTSIOM, Model 2: regression coefficients plot
+vtsiom_model_2_coefs_plot <-
+  vtsiom_model_2_plot_data %>% 
+  ggplot(aes(x = term, y = estimate)) +
+  geom_point(size = 3.5) +
+  coord_flip() +
+  ylim(-2.2, 2.2) +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2, color = "grey50") +
+  theme_bw() +
+  theme(text = element_text(family = "Times",
+                            face = "bold",
+                            size = 14)) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  labs(title = "VTsIOM: Malli 2",
+       subtitle = coefs,
+       x = NULL,
+       y = "Regressiokerroin") +
+  scale_x_discrete(labels = vtsiom_model_2_labels)
+
+# VTSIOM, Model 2: Odd ratios plot
+vtsiom_model_2_ors_plot <-
+  vtsiom_model_2_plot_data %>% 
+  ggplot(aes(x = term, y = oratio)) +
+  geom_point(size = 3.5) +
+  coord_flip() +
+  scale_y_log10(breaks = seq(0, 9, 1)) +
+  geom_errorbar(aes(ymin = oratio_lower, ymax = oratio_upper), width = 0.2, color = "grey50") +
+  theme_bw() +
+  theme(text = element_text(family = "Times",
+                            face = "bold",
+                            size = 14)) +
+  geom_hline(yintercept = 1, linetype = 2) +
+  labs(title = NULL,
+       subtitle = odds,
+       x = NULL,
+       y = "Riskiluku (logaritminen asteikko)",
+              caption = bquote(atop(paste(R^2, " = ", .(vtsiom_model_2_coxsnell)),
+                             paste(R^2, " = ", .(vtsiom_model_2_nagelkerke))))) +
+  scale_x_discrete(labels = NULL)
+# VTSIOM, Model 2: combine coeffients and odd ratios plots
+vtsiom_model_2_plot <- vtsiom_model_2_coefs_plot + vtsiom_model_2_ors_plot
+# VTSIOM, Model 2: print the combined plot for Model 2
+vtsiom_model_2_plot
+# VTSIOM: combine Model 1 and Model 2 results plots (kuva 7)
+kuva_7 <- vtsiom_model_1_plot / vtsiom_model_2_plot
+# VTSIOM: print the final full model plot (kuva 7)
+kuva_7
+
+```
+
+
 
 
 ```{r}
