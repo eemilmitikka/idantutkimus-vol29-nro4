@@ -775,12 +775,126 @@ rf_rr_prc_df <-
   pivot_longer(completed_prc:interrupted_prc,
                names_to = "response_category",
                values_to = "response_rate") %>%
+    select(pvm, date, response_category, response_rate) %>% 
+  mutate(response_rate = 100*round(response_rate, 2))
+
+# Run the commented code below if you want month names in Finnish for the Yandex plots
+# Sys.setlocale("LC_TIME", "fi_FI.UTF-8")
+
+vihrea <- "#53A095"
+punainen <- "#C75E51"
+harmaa <- "#8C8C8C"
+
+rr_p <- 
+ggplot(rf_rr_prc_df) +
+  aes(x = date, y = response_rate, fill = fct_rev(response_category)) +
+  geom_col() +
+  theme_oma() +
+  geom_text(aes(label = paste0(response_rate, "%")),
+            position = position_stack(vjust = 0.5),
+            size = 6,
+            fontface = "bold",
+            family = "Times") +
+  theme(
+    axis.line.x = element_line(arrow = arrow()),
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank(),
+    legend.position = "none",
+    axis.title.x = element_text(face = "bold",
+                                size = 18)
+  ) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%B") +
+  # geom_vline(xintercept = dmy("03-03-2022"), linetype = 2, size = 2) +
+  # annotate("text", y = 102, x = dmy("22-03-2022"), label = "Valeuutislaki astuu voimaan", size = 6) +
+  labs(title = "Vastausprosentit",
+       x = toupper("Kyselyn ajankohta (2022)")) +
+  # scale_fill_manual(values = c(punainen, harmaa, vihrea)) +
+  geom_vline(xintercept = dmy("03-03-2022"), linetype = 2, size = 2, alpha = 0.5) +
+  annotate("text", y = 103, x = dmy("08-04-2022"), label = "\"Valeuutislaki\" astuu voimaan", size = 6) +
+  scale_fill_manual(values = c(punainen, harmaa, vihrea)) +
+  geom_segment(aes(x = dmy("22-03-2022"), y = 103, xend = dmy("04-03-2022"), yend = 103),
+                  arrow = arrow(length = unit(0.5, "cm")))
+
+rf_rr_n_df <-
+  rf_response_rates %>% 
+  pivot_longer(completed_n:interrupted_n,
+               names_to = "response_category",
+               values_to = "response_rate") %>%
     select(pvm, date, response_category, response_rate)
 
-ggplot(rf_rr_pr_df) +
-  aes(x = pvm, y = response_rate, fill )
-    
-  
+rr_p_count <- 
+ggplot(rf_rr_n_df) +
+  aes(x = date, y = response_rate, fill = fct_rev(response_category)) +
+  geom_col() +
+  theme_oma() +
+  geom_text(aes(label = paste0(response_rate)),
+            position = position_stack(vjust = 0.5),
+            size = 6,
+            fontface = "bold",
+            family = "Times") +
+  theme(
+    axis.line.x = element_line(arrow = arrow()),
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank(),
+    legend.position = "bottom",
+    axis.title.x = element_text(face = "bold",
+                                size = 18),
+    plot.title = element_text(face = "bold.italic"),
+    legend.text = element_text(size = 12),
+    legend.title = element_text(size = 15)
+  ) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%B") +
+  geom_vline(xintercept = dmy("03-03-2022"), linetype = 2, size = 2, alpha = 0.5) +
+  annotate("text", y = 32000, x = dmy("08-04-2022"), label = "\"Valeuutislaki\" astuu voimaan", size = 6) +
+  labs(title = "Yhteydenottojen määrä suhteessa vastauksiin",
+       x = toupper("Kyselyn ajankohta (2022)"),
+       fill = "KYSELYN TULOS") +
+  scale_fill_manual(values = c(punainen, harmaa, vihrea),
+                    labels = c("Kieltäytyi", "Keskeytetti", "Vastasi loppuun asti")) +
+  geom_segment(aes(x = dmy("22-03-2022"), y = 32000, xend = dmy("04-03-2022"), yend = 32000),
+                  arrow = arrow(length = unit(0.5, "cm")))
+
+rr_p / rr_p_count +
+    plot_annotation(title = toupper("VASTAUSKATO HYÖKKÄYSSOTAAN LIITTYVISSÄ KYSELYISSÄ"), 
+                  subtitle = "(Russian Field)") & theme(text = element_text(family = "Times", 
+                                                                               size = 20,
+                                                                               face = "bold"))
+
+
+?scale_fill_manual
+
+"VASTAUSKATO HYÖKKÄYSSOTAAN LIITTYVISSÄ KYSELYISSÄ"
+
+```
+
+
+```{r}
+chronicles_sotakannatus <-
+  chronicles_all %>% 
+  ggplot(aes(x = date, y = prc, fill = fct_rev(support))) +
+  geom_col() +
+  theme_oma() +
+  geom_text(aes(label = paste0(prc,"%")),
+            position = position_stack(vjust = 0.5),
+            size =4,
+            fontface = "bold",
+            family = "Times"
+            ) +
+  scale_fill_manual(values = c(kieltaytyy, eos, ehd_en_tue, tuen),
+                    labels = rev(c("Tuen", "En tue", "En osaa sanoa", "Kieltäytyy vastaamasta"))) +
+  theme(axis.text.y = element_blank(),
+        axis.title = element_blank(),
+        axis.text.x = element_text(angle = 30,
+                                   size = 13),
+        legend.title = element_text(face = "bold.italic",
+                                    size = 14),
+        legend.text = element_text(size = 12)
+        ) +
+  labs(fill = toupper("Sodan kannatus"),
+       title = 'CHRONICLES: "Tuetteko Venäjän sotilasoperaatiota Ukrainan\nalueella, vai ettekö osaa sanoa tai halua vastata kysymykseen?"')
+
+
+
 rf_response_rates2 %>% 
   group_by(result, pvm) %>% 
   summarize(rr = result_count / sum(result_count))
