@@ -1,0 +1,112 @@
+---
+title: "Venäjänkielisten lähteiden translitterointi"
+author: "Eemil Mitikka"
+date: "2022-11-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Libraries
+
+```{r}
+library(here)
+library(striprtf)
+library(tidyverse)
+
+```
+
+# Transform references written with Cyrillic letters into Latin script
+
+```{r}
+# Import the data
+refs <- 
+  here("data/translitteroitavat_lahteet.rtf") %>% 
+  read_rtf()
+
+# Define transliteration pattern
+pat <- 
+  c("А" = "A",
+  "а" = "a",
+  "Б" = "B",
+  "б" = "b",
+  "В" = "V",
+  "в" = "v",
+  "Г" = "G",
+  "г" = "g",
+  "Д" = "D",
+  "д" = "d",
+  "Е" = "E",
+  "е" = "e",
+  "Ё" = "Jo",
+  "ё" = "jo",
+  "Ж" = "Ž",
+  "ж" = "ž",
+  "З" = "Z",
+  "з" = "z",
+  "И" = "I",
+  "и" = "i",
+  "Й" = "I",
+  "й" = "i",
+  "К" = "K",
+  "к" = "k",
+  "Л" = "L",
+  "л" = "l",
+  "М" = "M",
+  "м" = "m",
+  "Н" = "N",
+  "н" = "n",
+  "О" = "O",
+  "о" = "o",
+  "П" = "P",
+  "п" = "p",
+  "Р" = "R",
+  "р" = "r",
+  "С" = "S",
+  "с" = "s",
+  "Т" = "T",
+  "т" = "t",
+  "У" = "U",
+  "у" = "u",
+  "Ф" = "F",
+  "ф" = "f",
+  "Х" = "H",
+  "х" = "h",
+  "Ц" = "Ts",
+  "ц" = "ts",
+  "Ч" = "Tš",
+  "ч" = "tš",
+  "Ш" = "Š",
+  "ш" = "š",
+  "Щ" = "Štš",
+  "щ" = "štš",
+  "Ъ" = "",
+  "ъ" = "",
+  "Ы" = "Y",
+  "ы" = "y",
+  "ь" = "",
+  "Э" = "E",
+  "э" = "e",
+  "Ю" = "Ju",
+  "ю" = "ju",
+  "Я" = "Ja",
+  "я" = "ja")
+
+# Create new character vector with Latin transliteration
+refs2 <- str_replace_all(refs, pat)
+
+# Export the transliterated file as txt-file
+writeLines(refs2, "translitteroidut_lahteet.txt")
+
+str_replace_all("Всероссийский центр изучения общественного мнения", pat)
+
+str_replace_all("«Военная операция» на Украине: отношение россиян. Восьмая волна (28-31 июля)", pat)
+
+str_replace_all("«Специальная военная операция» на Украине: отношение россиян. Третья волна (13-16 марта)", pat)
+
+str_replace_all("«Специальная военная операция» на Украине: отношение россиян. Четвертая волна (23-25 марта)", pat)
+
+```
+
