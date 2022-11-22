@@ -1114,7 +1114,24 @@ chronicles <- chronicles %>%
 
 # Chronicles, Model 3: Subset the data
 chronicles_model_3_data <- chronicles %>% 
-  select(support, age, gender, tnp, edu_gr, wes_age_gender_tnp, tutut_ihmiset, tv, youtube, en_seuraa, internet_sivut, telegram, perhe_tulot, maan_asiat, sukul_osallist, perhe_mat_tilanne, tyo_lomautus, perhe_varautuminen) %>% 
+  select(support, 
+         age,
+         gender,
+         tnp,
+         edu_gr,
+         wes_age_gender_tnp,
+         tutut_ihmiset,
+         tv,
+         youtube,
+         en_seuraa,
+         internet_sivut,
+         telegram,
+         perhe_tulot,
+         maan_asiat,
+         sukul_osallist,
+         perhe_mat_tilanne,
+         tyo_lomautus,
+         perhe_varautuminen) %>% 
   mutate(support = as.factor(
     case_when(support == 1 ~ 1, # tukee sotaa
               support == 2 ~ 0)), # ei tue
@@ -1232,6 +1249,29 @@ p_arvot <- "Tilastollinen merkitsevyys: *** = p < 0.001, ** = p < 0.01, * = p < 
 # jpeg(here("img/kuva_4.jpg"), units = "in", width = 16, height = 18, res = 300)
 # kuva_4
 # dev.off()
+
+# chronicles_questions <- 
+#   chronicles %>% 
+#   select(q21,
+#          gender,
+#          age,
+#          edu_gr,
+#          tnp,
+#          q8_1,
+#          q8_2,
+#          q8_5,
+#          q8_9,
+#          q8_8,
+#          q8_6,
+#          q4_2,
+#          q6,
+#          q10,
+#          q4_1,
+#          q4_3) %>% 
+#   rdhs::get_variable_labels()
+# 
+# openxlsx::write.xlsx(chronicles_questions, here("docs/chronicles_questions.xlsx"))
+
 
 ```
 
