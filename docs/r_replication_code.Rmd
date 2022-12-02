@@ -1246,8 +1246,64 @@ kuva_4 <-
   
 p_arvot <- "Tilastollinen merkitsevyys: *** = p < 0.001, ** = p < 0.01, * = p < 0.05"
 
+theme_oma3 <- function() {
+  font <- "Times"
+  theme_minimal() %+replace%
+    theme(
+      plot.title = element_text(
+        family = font,
+        size = 24,
+        face = 'bold',
+        hjust = 0,
+        vjust = 2),
+      plot.subtitle = element_text(
+                   family = font,
+                   face = 'bold',
+                   size = 14),
+      plot.caption = element_text(
+        family = font,
+        size = 14,
+        face = 'bold',
+        hjust = 1,
+        colour = "black"),
+      axis.title = element_text(
+        family = font,
+        size = 18),
+      axis.text = element_text(
+        family = font,
+        face = 'bold',
+        size = 18),
+      axis.text.x = element_text(
+        margin = margin(5, b = 10)),
+      legend.title = element_text(
+        family = font,
+        size = 10,
+        face = "bold"),
+      legend.text = element_text(
+        family = font,
+        size = 8,
+        face = "bold"),
+      axis.title.x = element_text(
+        face = "bold"
+      )
+    )
+}
+
+kuva_4_final <-
+kuva_4.3 +
+  labs(title = paste("Chronicles-aineiston malli:", odds),
+       caption = p_arvot) +
+  theme_oma3() +
+  theme(plot.title = element_text(color = vari_chronicles,
+                                  margin = margin(10,0,0,0)),
+        plot.caption = element_text(margin = margin(10,0,0,0)))
+
 # jpeg(here("img/kuva_4.jpg"), units = "in", width = 16, height = 18, res = 300)
 # kuva_4
+# dev.off()
+
+# jpeg(here("img/kuva_4_final.jpg"), units = "in", width = 14, height = 12, res = 300)
+# kuva_4_final
 # dev.off()
 
 # chronicles_questions <- 
@@ -1491,9 +1547,23 @@ kuva_5 <-
                                       family = "Times",
                                       face = "bold"))
 
+kuva_5_final <- 
+kuva_5.2 +
+  labs(title = paste("Russian Field-aineiston malli:", odds),
+       caption = p_arvot) +
+  theme_oma3() +
+  theme(plot.title = element_text(color = vari_rf,
+                                  margin = margin(10,0,0,0)),
+        plot.caption = element_text(margin = margin(10,0,0,0)))
+
 # jpeg(here("img/kuva_5.jpg"), units = "in", width = 16, height = 18, res = 300)
 # kuva_5
 # dev.off()
+
+# jpeg(here("img/kuva_5_final.jpg"), units = "in", width = 14, height = 12, res = 300)
+# kuva_5_final
+# dev.off()
+
 
 
 
@@ -1845,8 +1915,23 @@ kuva_6 <-
                                       family = "Times",
                                       face = "bold"))
 
+kuva_6_final <-
+kuva_6.2 +
+  labs(title = paste("VTsIOM-aineiston malli:", odds),
+       caption = p_arvot) +
+  theme_oma3() +
+  theme(plot.title = element_text(color = vari_vtsiom,
+                                  margin = margin(10,0,0,0)),
+        plot.caption = element_text(margin = margin(10,0,0,0)))
+
+
+
 # jpeg(here("img/kuva_6.jpg"), units = "in", width = 16, height = 18, res = 300)
 # kuva_6
+# dev.off()
+
+# jpeg(here("img/kuva_6_final.jpg"), units = "in", width = 14, height = 12, res = 300)
+# kuva_6_final
 # dev.off()
 
 ```
