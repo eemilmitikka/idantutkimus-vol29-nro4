@@ -23,15 +23,14 @@ library(here)
 library(haven)
 library(janitor)
 library(broom)
+library(ggtext)
 
 theme_oma <- function() {
-  font <- "Times" # assign font family up front
-  theme_minimal() %+replace% # replace elements we want to change
+  font <- "Times"
+  theme_minimal() %+replace%
     theme(
-      # Plot grids color
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
-      # Text elements
       plot.title = element_text(
         family = font,
         size = 18,
@@ -39,19 +38,16 @@ theme_oma <- function() {
         hjust = 0,
         vjust = 2,
         margin = margin(15,0,0,0)),
-      
-      plot.subtitle = element_text( # title
-                   family = font, # set font family
-                   face = 'bold', # bold typeface
-                   size = 14), # size of the title
-      # Plot caption
+      plot.subtitle = element_text(
+                   family = font,
+                   face = 'bold',
+                   size = 14),
       plot.caption = element_text(
         family = font,
         size = 10,
         face = 'bold',
         hjust = 1,
         colour = "#61605A"),
-      # Axis title
       axis.title = element_text(
         family = font,
         size = 12),
@@ -61,7 +57,6 @@ theme_oma <- function() {
         size = 12),
       axis.text.x = element_text(
         margin = margin(5, b = 10)),
-      # Legend elements
       legend.title = element_text(
         family = font,
         size = 10,
@@ -73,12 +68,98 @@ theme_oma <- function() {
     )
 }
 
+theme_oma2 <- function() {
+  font <- "Times"
+  theme_minimal() %+replace%
+    theme(
+      plot.title = element_text(
+        family = font,
+        size = 24,
+        face = 'bold',
+        hjust = 0,
+        vjust = 2),
+      plot.subtitle = element_text(
+                   family = font,
+                   face = 'bold',
+                   size = 14),
+      plot.caption = element_text(
+        family = font,
+        size = 14,
+        face = 'bold',
+        hjust = 1,
+        colour = "black"),
+      axis.title = element_text(
+        family = font,
+        size = 18),
+      axis.text = element_text(
+        family = font,
+        face = 'bold',
+        size = 14),
+      axis.text.x = element_text(
+        margin = margin(5, b = 10)),
+      legend.title = element_text(
+        family = font,
+        size = 10,
+        face = "bold"),
+      legend.text = element_text(
+        family = font,
+        size = 8,
+        face = "bold"),
+      axis.title.x = element_text(
+        face = "bold"
+      )
+    )
+}
+
+theme_oma3 <- function() {
+  font <- "Times"
+  theme_minimal() %+replace%
+    theme(
+      plot.title = element_text(
+        family = font,
+        size = 24,
+        face = 'bold',
+        hjust = 0,
+        vjust = 2),
+      plot.subtitle = element_text(
+                   family = font,
+                   face = 'bold',
+                   size = 14),
+      plot.caption = element_text(
+        family = font,
+        size = 14,
+        face = 'bold',
+        hjust = 1,
+        colour = "black"),
+      axis.title = element_text(
+        family = font,
+        size = 18),
+      axis.text = element_text(
+        family = font,
+        face = 'bold',
+        size = 18),
+      axis.text.x = element_text(
+        margin = margin(5, b = 10)),
+      legend.title = element_text(
+        family = font,
+        size = 10,
+        face = "bold"),
+      legend.text = element_text(
+        family = font,
+        size = 8,
+        face = "bold"),
+      axis.title.x = element_text(
+        face = "bold"
+      )
+    )
+}
+
+
 # Regression coefficients title
 coefs <- "Regressiokertoimet\nSelitettävä muuttuja = sodan kannatus"
 odds <- "Riskiluvut\nSelitettävä muuttuja = sodan kannatus"
 
-
-
+# Color palettes
 vihrea <- "#51A195"
 punainen <- "#C56053"
 harmaa <- "#8C8D8D"
@@ -88,6 +169,9 @@ en_tue <- "#E66826"
 eos <- "#949494"
 
 p_arvot <- "Tilastollinen merkitsevyys: *** = p < 0.001, ** = p < 0.01, * = p < 0.05"
+
+# Run the commented code below if you want month names in Finnish for the Yandex plots
+Sys.setlocale("LC_TIME", "fi_FI.UTF-8")
 
 
 ```
@@ -114,6 +198,8 @@ levada_data$support <- factor(levada_data$support,
                                              "rather_no",
                                              "definitely_no",
                                              "no_answer")))
+
+# write.csv(levada_data, here("data/levada_all.csv"))
 
 ehd_tuen <- "#355BB7"
 tuen <- "#4B88CB"
@@ -213,6 +299,8 @@ vtsiom_sotakannatus$date2 <- dmy(c(rep("25.2.2022", 3),
 # Plot VTSIOM war support data
 vtsiom_pvm <- c("25.2.", "27.2.", "3.3.", "17.3.", "24.3.", "12.4.", "24.4.", "12.5.", "26.5.", "12.6.", "25.6.")
 
+# write.csv(vtsiom_sotakannatus, here("data/vtsiom_all.csv"))
+
 vihrea <- "#51A195"
 punainen <- "#C56053"
 harmaa <- "#8C8D8D"
@@ -247,7 +335,7 @@ vtsiom_sotakannatus_kuva <-
         legend.text = element_text(size = 12)
         ) +
   labs(fill = toupper("Sodan kannatus"),
-       title = 'VTSIOM: "Tuetteko vai ettekö tue Venäjän päätöstä toteuttaa sotilaallinen erikoisoperaatio Ukrainassa?"')
+       title = "VTSIOM: \"Tuetteko vai ettekö tue Venäjän päätöstä toteuttaa sotilaallinen erikoisoperaatio Ukrainassa?\"")
   
 
 # FOM: define war support data "by hand" (information retrieved from their website)
@@ -270,6 +358,8 @@ fom_data <-
 fom_data <- 
   fom_data %>% 
   mutate(support = fct_relevel(support, rev(c("Oikea päätös", "Väärä päätös", "En osaa sanoa"))))
+
+# write.csv(fom_data, here("data/fom_all.csv"))
 
 # Plot the FOM data
 fom_sotakannatus <-
@@ -353,6 +443,8 @@ rf_pvm4 <- "23.5.–26.5."
 
 rf_all$date <- factor(rf_all$date,
                       levels = c(rf_pvm1, rf_pvm2, rf_pvm3, rf_pvm4))
+
+# write.csv(rf_all, here("data/rf_all.csv"))
 
 kieltaytyy <- punainen
 keltainen <- "#FDB409"
@@ -486,6 +578,8 @@ chronicles_all$date <- factor(chronicles_all$date,
                                    chronicles_pvm6,
                                    chronicles_pvm7,
                                    chronicles_pvm8))
+
+# write.csv(chronicles_all, here("data/chronicles_all.csv"))
 
 chronicles_sotakannatus <-
   chronicles_all %>% 
@@ -657,7 +751,7 @@ figure_yandex_2 <-
   annotate("text", y = 5500000, x = viivanpaa, label = "Venäjän\nhyökkäyssota\nalkaa", size = 5) +
   # scale_x_date(date_breaks = "1 month", date_labels = "%B") +
   scale_x_date(date_breaks = "2 months", date_labels = "%m/%Y") +
-  labs(title = '"erikoisoperaatio" vs. "sota"',
+  labs(title = "\"erikoisoperaatio\" vs. \"sota\"",
        y = NULL,
        x = toupper("Päivämäärä (kuukausi/vuosi)"),
        color = "Hakusana") +
@@ -674,7 +768,7 @@ kuva_2_paivitetty <-
                                                                                size = 20,
                                                                                face = "bold"))
 
-kuva_2
+
 
 jpeg(here("img/kuva_2_paivitetty.jpg"), units = "in", width = 17, height = 12, res = 300)
 kuva_2_paivitetty
@@ -856,55 +950,44 @@ dev.off()
 
 ```
 
+# Taulukko 1
+
+```{r}
+install.packages("gtsummary")
+
+
+df <- 
+  data.frame(survey = c("Chronicles", 
+                        "Russian Field",
+                        "VTsIOM"),
+           date = c("14.–19.5.2022",
+                    "5.–7.3.2022",
+                    "25.2.–25.6.2022"),
+           sample_size = c(1605, 
+                           1606, 
+                           9600),
+           state_dependent = c("Ei",
+                               "Ei",
+                               "Kyllä"),
+           affilition = c("Oppositio",
+                          "Oppositio",
+                          "Presidentinhallinto, valtio"))
+# Rename the columns
+colnames(df) <- c("Organisaatio",
+                  "Päivämäärä",
+                  "Otoskoko",
+                  "Riippuvuus valtiosta",
+                  "Kytkös")
+# Print Table 1
+knitr::kable(df,
+             caption = "Taulukko 1. Tutkimusaineistojen kuvaus.")
+```
+
+
 # Kuva 4
 
 
 ```{r}
-theme_oma2 <- function() {
-  font <- "Times"
-  theme_minimal() %+replace%
-    theme(
-      plot.title = element_text(
-        family = font,
-        size = 24,
-        face = 'bold',
-        hjust = 0,
-        vjust = 2),
-      plot.subtitle = element_text(
-                   family = font,
-                   face = 'bold',
-                   size = 14),
-      plot.caption = element_text(
-        family = font,
-        size = 14,
-        face = 'bold',
-        hjust = 1,
-        colour = "black"),
-      axis.title = element_text(
-        family = font,
-        size = 18),
-      axis.text = element_text(
-        family = font,
-        face = 'bold',
-        size = 14),
-      axis.text.x = element_text(
-        margin = margin(5, b = 10)),
-      legend.title = element_text(
-        family = font,
-        size = 10,
-        face = "bold"),
-      legend.text = element_text(
-        family = font,
-        size = 8,
-        face = "bold"),
-      axis.title.x = element_text(
-        face = "bold"
-      )
-    )
-}
-
-
-
 # Chronicles, Model 1: Import data
 chronicles <- here::here("data/Полные Хроники 5.0.sav") %>% 
   haven::read_spss() %>% 
@@ -1243,68 +1326,34 @@ kuva_4 <-
     theme(plot.caption = element_text(size = 15,
                                       family = "Times",
                                       face = "bold"))
-  
-p_arvot <- "Tilastollinen merkitsevyys: *** = p < 0.001, ** = p < 0.01, * = p < 0.05"
 
-theme_oma3 <- function() {
-  font <- "Times"
-  theme_minimal() %+replace%
-    theme(
-      plot.title = element_text(
-        family = font,
-        size = 24,
-        face = 'bold',
-        hjust = 0,
-        vjust = 2),
-      plot.subtitle = element_text(
-                   family = font,
-                   face = 'bold',
-                   size = 14),
-      plot.caption = element_text(
-        family = font,
-        size = 14,
-        face = 'bold',
-        hjust = 1,
-        colour = "black"),
-      axis.title = element_text(
-        family = font,
-        size = 18),
-      axis.text = element_text(
-        family = font,
-        face = 'bold',
-        size = 18),
-      axis.text.x = element_text(
-        margin = margin(5, b = 10)),
-      legend.title = element_text(
-        family = font,
-        size = 10,
-        face = "bold"),
-      legend.text = element_text(
-        family = font,
-        size = 8,
-        face = "bold"),
-      axis.title.x = element_text(
-        face = "bold"
-      )
-    )
-}
+# jpeg(here("img/kuva_4.jpg"), units = "in", width = 16, height = 18, res = 300)
+# kuva_4
+# dev.off()
+  
+chronicles_coxsnell <- paste(expression(R^2), "=", chronicles_model_3_coxsnell,"<br>")
+chronicles_nagelkerke <- paste(expression(R^2), "=", chronicles_model_3_nagelkerke,"<br>")
 
 kuva_4_final <-
 kuva_4.3 +
-  labs(title = paste("Chronicles-aineiston malli:", odds),
-       caption = p_arvot) +
   theme_oma3() +
+  labs(title = paste("Chronicles-aineiston malli:", odds),
+       caption = c(paste(chronicles_coxsnell, 
+                       chronicles_nagelkerke),
+                       p_arvot)) +
   theme(plot.title = element_text(color = vari_chronicles,
                                   margin = margin(10,0,0,0)),
-        plot.caption = element_text(margin = margin(10,0,0,0)))
+        plot.caption = element_markdown(margin = margin(10,0,0,0),
+                                        hjust = c(1, 2.2)))
+
 
 # jpeg(here("img/kuva_4.jpg"), units = "in", width = 16, height = 18, res = 300)
 # kuva_4
 # dev.off()
 
-# jpeg(here("img/kuva_4_final.jpg"), units = "in", width = 14, height = 12, res = 300)
-# kuva_4_final
-# dev.off()
+jpeg(here("img/kuva_4_final.jpg"), units = "in", width = 14, height = 12, res = 300)
+kuva_4_final
+dev.off()
 
 # chronicles_questions <- 
 #   chronicles %>% 
@@ -1329,7 +1378,70 @@ kuva_4.3 +
 # openxlsx::write.xlsx(chronicles_questions, here("docs/chronicles_questions.xlsx"))
 
 
+
 ```
+
+
+```{r}
+p <- ggplot(mtcars, aes(x=wt, y = mpg)) + 
+   geom_point()
+
+p + labs(caption = c("right footer", "left footer")) + 
+theme(plot.caption = element_text(hjust=c(1, 0)))
+
+p +
+  labs(title = paste(expression("*R*"^2), "Jee")) +
+  theme(plot.title = element_markdown())
+
+p +
+  labs(title = paste(expression(R^2), "=", chronicles_model_3_coxsnell)) +
+  theme(plot.title = element_markdown())
+
+p +
+  labs(title = paste(expression(R^2), "=", chronicles_model_3_coxsnell,
+                     expression(R^2), "=", chronicles_model_3_nagelkerke))
+
+p +
+  theme_oma3() +
+  labs(caption = paste(expression(R^2), "=", chronicles_model_3_coxsnell, "\n",
+                     expression(R^2), "=", chronicles_model_3_nagelkerke)) +
+  theme(plot.caption = element_markdown())
+
+p +
+  theme_oma3() +
+  labs(caption = paste(chronicles_coxsnell, chronicles_nagelkerke, p_arvot)) +
+  theme(plot.caption = element_markdown())
+
+chronicles_coxsnell <- paste(expression(R^2), "=", chronicles_model_3_coxsnell,"<br>")
+chronicles_nagelkerke <- paste(expression(R^2), "=", chronicles_model_3_nagelkerke,"<br>")
+
+
+
+chronicles_coxsnell <- paste(expression("*R*"^2), "=", chronicles_model_3_coxsnell,"<br>")
+
+
+chronicles_coxsnell <- paste(expression(R^2), "=", chronicles_model_3_coxsnell,"\n")
+chronicles_nagelkerke <- paste(expression(R^2), "=", chronicles_model_3_nagelkerke)
+
+p1 <- 
+kuva_4.3 +
+  theme_oma3() +
+  labs(title = paste("Chronicles-aineiston malli:", odds),
+       caption = paste(chronicles_coxsnell, chronicles_nagelkerke, p_arvot)) +
+  theme(plot.title = element_text(color = vari_chronicles,
+                                  margin = margin(10,0,0,0)),
+        # plot.caption = element_text(margin = margin(10,0,0,0)),
+        plot.caption = element_markdown(margin = margin(10,0,0,0)))
+
+
+jpeg(here("img/kuva_4_testi.jpg"), units = "in", width = 14, height = 12, res = 300)
+p1
+dev.off()
+
+
+```
+
+
 
 # Kuva 5
 
@@ -1547,14 +1659,20 @@ kuva_5 <-
                                       family = "Times",
                                       face = "bold"))
 
-kuva_5_final <- 
+rf_coxsnell <- paste(expression(R^2), "=", rf_model_2_coxsnell,"<br>")
+rf_nagelkerke <- paste(expression(R^2), "=", rf_model_2_nagelkerke,"<br>")
+
+kuva_5_final <-
 kuva_5.2 +
   labs(title = paste("Russian Field-aineiston malli:", odds),
-       caption = p_arvot) +
+       caption = c(paste(rf_coxsnell,
+                       rf_nagelkerke),
+                       p_arvot)) +
   theme_oma3() +
   theme(plot.title = element_text(color = vari_rf,
                                   margin = margin(10,0,0,0)),
-        plot.caption = element_text(margin = margin(10,0,0,0)))
+        plot.caption = element_markdown(margin = margin(10,0,0,0),
+                                        hjust = c(1, 2.2)))
 
 # jpeg(here("img/kuva_5.jpg"), units = "in", width = 16, height = 18, res = 300)
 # kuva_5
@@ -1563,9 +1681,6 @@ kuva_5.2 +
 # jpeg(here("img/kuva_5_final.jpg"), units = "in", width = 14, height = 12, res = 300)
 # kuva_5_final
 # dev.off()
-
-
-
 
 
 
@@ -1915,20 +2030,24 @@ kuva_6 <-
                                       family = "Times",
                                       face = "bold"))
 
-kuva_6_final <-
-kuva_6.2 +
-  labs(title = paste("VTsIOM-aineiston malli:", odds),
-       caption = p_arvot) +
-  theme_oma3() +
-  theme(plot.title = element_text(color = vari_vtsiom,
-                                  margin = margin(10,0,0,0)),
-        plot.caption = element_text(margin = margin(10,0,0,0)))
-
-
-
 # jpeg(here("img/kuva_6.jpg"), units = "in", width = 16, height = 18, res = 300)
 # kuva_6
 # dev.off()
+
+vtsiom_coxsnell <- paste(expression(R^2), "=", vtsiom_model_2_coxsnell,"<br>")
+vtsiom_nagelkerke <- paste(expression(R^2), "=", vtsiom_model_2_nagelkerke,"<br>")
+
+kuva_6_final <- 
+kuva_6.2 +
+  labs(title = paste("VTsIOM-aineiston malli:", odds),
+       caption = c(paste(vtsiom_coxsnell,
+                       vtsiom_nagelkerke),
+                       p_arvot)) +
+  theme_oma3() +
+  theme(plot.title = element_text(color = vari_vtsiom,
+                                  margin = margin(10,0,0,0)),
+        plot.caption = element_markdown(margin = margin(10,0,0,0),
+                                        hjust = c(1, 2.2)))
 
 # jpeg(here("img/kuva_6_final.jpg"), units = "in", width = 14, height = 12, res = 300)
 # kuva_6_final
