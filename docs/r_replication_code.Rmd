@@ -953,10 +953,7 @@ dev.off()
 # Taulukko 1
 
 ```{r}
-install.packages("gtsummary")
-
-
-df <- 
+taulukko_1 <- 
   data.frame(survey = c("Chronicles", 
                         "Russian Field",
                         "VTsIOM"),
@@ -973,14 +970,15 @@ df <-
                           "Oppositio",
                           "Presidentinhallinto, valtio"))
 # Rename the columns
-colnames(df) <- c("Organisaatio",
+colnames(taulukko_1) <- c("Organisaatio",
                   "Päivämäärä",
                   "Otoskoko",
                   "Riippuvuus valtiosta",
                   "Kytkös")
 # Print Table 1
-knitr::kable(df,
+knitr::kable(taulukko_1,
              caption = "Taulukko 1. Tutkimusaineistojen kuvaus.")
+
 ```
 
 
