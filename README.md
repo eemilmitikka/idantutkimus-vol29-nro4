@@ -20,3 +20,5 @@ Tilastollisten mallien analyysit on tehty staattisten kyselytutkimusaineistojen 
   - [Специальная военная операция: мониторинг | 30 июня 2022](https://wciom.ru/analytical-reviews/analiticheskii-obzor/specialnaja-voennaja-operacija-monitoring-20223006) ... Материалы ... Массив данных
   
 Kaikki tässä käytetyt tilastolliset aineistot on tallennettu `data` nimiseen kansioon, jonka vuoksi työhakemisto (*working directory*) kulkee tässä käytetyn **here-paketin** logiikalla seuraavasti: `here("data/tiedostonimi.tiedostoformaatti")`, esim. `here("data/Полные Хроники 5.0.sav")`, jne. Replikaatioanalyysiä tehdessä tiedostopolku on määriteltävä oman paikallisen työhakemiston mukaan.
+
+Tutkimuksen tilastollisissa malleissa käytettyjen muuttujien kuvaukset sekä muuttujien alkuperäiset kysymykset ja suomennokset löytyvät [täältä](https://github.com/eemilmitikka/idantutkimus-vol29-nro4/blob/main/docs/kyselyiden_kysymykset.pdf).
