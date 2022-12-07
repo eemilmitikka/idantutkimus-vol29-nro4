@@ -12,6 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 # R-paketit, teemat, yms.
+```{r}
+
+```
 
 ```{r warning=FALSE, message=FALSE}
 library(tidyverse)
@@ -1255,7 +1258,20 @@ chronicles_model_3_design <- svydesign(ids =~ 1,
                                   data = chronicles_model_3_data,
                                   weights = chronicles_model_3_data$wes_age_gender_tnp)
 # Chronicles. Model 3: run the model
-chronicles_model_3 <- svyglm(formula = support ~ age + gender + tnp + edu_gr + tutut_ihmiset + tv + youtube + en_seuraa + internet_sivut + telegram + perhe_tulot + sukul_osallist + tyo_lomautus + perhe_varautuminen,
+chronicles_model_3 <- svyglm(formula = support ~ age + 
+                               gender +
+                               tnp +
+                               edu_gr +
+                               tutut_ihmiset +
+                               tv +
+                               youtube +
+                               en_seuraa +
+                               internet_sivut +
+                               telegram +
+                               perhe_tulot +
+                               sukul_osallist +
+                               tyo_lomautus +
+                               perhe_varautuminen,
        design = chronicles_model_3_design,
        family = binomial(logit))
 # Chronicles. Model 3: print the results
@@ -1349,9 +1365,9 @@ kuva_4.3 +
 # kuva_4
 # dev.off()
 
-jpeg(here("img/kuva_4_final.jpg"), units = "in", width = 14, height = 12, res = 300)
-kuva_4_final
-dev.off()
+# jpeg(here("img/kuva_4_final.jpg"), units = "in", width = 14, height = 12, res = 300)
+# kuva_4_final
+# dev.off()
 
 # chronicles_questions <- 
 #   chronicles %>% 
@@ -1375,6 +1391,11 @@ dev.off()
 # 
 # openxlsx::write.xlsx(chronicles_questions, here("docs/chronicles_questions.xlsx"))
 
+# library(labelled)
+# 
+# chronicles %>% 
+#   select(q4_1) %>% 
+#   look_for()
 
 
 ```
@@ -1490,7 +1511,16 @@ rf_model_1_design <- svydesign(ids =~ 1,
                                weights = rf_model_1_data$vtpv)
 
 # Russian Field, Model 1: run the model
-rf_model_1 <- svyglm(support ~ ika + sukupuoli + tv + youtube + telegram + tutut + yandex_google + valt_nettisivut + valt_media_nettisivut + vkontakte,
+rf_model_1 <- svyglm(support ~ ika + 
+                       sukupuoli +
+                       tv +
+                       youtube +
+                       telegram +
+                       tutut +
+                       yandex_google +
+                       valt_nettisivut +
+                       valt_media_nettisivut +
+                       vkontakte,
        design = rf_model_1_design,
        family = binomial(logit))
 
@@ -1587,7 +1617,20 @@ rf_model_2_design <- svydesign(ids =~ 1,
                                weights = rf_model_2_data$vtpv)
 
 # Russian Field, Model 2:  run the model
-rf_model_2 <- svyglm(support ~ ika + sukupuoli + tv + youtube + telegram + tutut + yandex_google + valt_nettisivut + valt_media_nettisivut + vkontakte + sanktio_henk_koht + sanktio_ystavat + sanktio_perhe + sanktio_ei_vaikutusta,
+rf_model_2 <- svyglm(support ~ ika + 
+                       sukupuoli + 
+                       tv + 
+                       youtube + 
+                       telegram + 
+                       tutut + 
+                       yandex_google + 
+                       valt_nettisivut + 
+                       valt_media_nettisivut + 
+                       vkontakte + 
+                       sanktio_henk_koht + 
+                       sanktio_ystavat + 
+                       sanktio_perhe + 
+                       sanktio_ei_vaikutusta,
        design = rf_model_2_design,
        family = binomial(logit))
 # Russian Field, Model 2: print the results
@@ -1680,6 +1723,105 @@ kuva_5.2 +
 # kuva_5_final
 # dev.off()
 
+rf <- here::here("data/МАССИВ SPSS Russian Field - _Россия-Украина_ (всероссийский телефонный опрос, 1600, 5-7 марта).sav") %>% 
+  haven::read_spss() %>% 
+  janitor::clean_names() %>% 
+  mutate(support = q5,
+         ika = q3,
+         sukupuoli = q2,
+         tv = as.factor(q8_1),
+         valt_printtimedia = as.factor(q8_2),
+         valt_media_nettisivut = as.factor(q8_3),
+         radio = as.factor(q8_4),
+         sanomalehdet = as.factor(q8_5),
+         valt_nettisivut = as.factor(q8_6),
+         vkontakte = as.factor(q8_7),
+         odnoklassiki = as.factor(q8_8),
+         facebook = as.factor(q8_9),
+         instagram = as.factor(q8_10),
+         twitter = as.factor(q8_11),
+         yandex_google = as.factor(q8_12),
+         youtube = as.factor(q8_13),
+         telegram = as.factor(q8_14),
+         whatsapp = as.factor(q8_15),
+         viber = as.factor(q8_16),
+         tutut = as.factor(q8_17),
+         muut = as.factor(q8_18),
+         en_seuraa = as.factor(q8_19))
+
+# Russian Field, Model 2:  
+rf_model_2_data <- rf %>% 
+  mutate(
+  support = as.factor(
+    case_when(support %in% c(1, 2) ~ 1,
+              support %in% c(3, 4) ~ 0)),
+  sukupuoli = as.factor(
+    case_when(sukupuoli == 1 ~ 1, # mies
+              sukupuoli == 2 ~ 0)), # nainen
+  ika = as.factor(ika),
+  sanktio_henk_koht = as.factor(q9_1),
+  sanktio_perhe = as.factor(q9_2),
+  sanktio_ystavat = as.factor(q9_3),
+  sanktio_ei_vaikutusta = as.factor(q9_4),
+  talous_nakyma = as.factor(
+    case_when(q11 == 1 ~ 4, # tulot lisääntyvät
+              q11 == 2 ~ 3, # tulot pysyvät ennallaan
+              q11 == 3 ~ 2, # tulot pienentyvät merkittävästi
+              q11 == 4 ~ 1)), # menetän tulonlähteeni
+  talous_tilanne = as.factor(
+    case_when(q12 == 1 ~ 1, # rahat eivät riitä elintarvikkeisiin
+              q12 == 2 ~ 2, # rahat riittävät vaivoin vaatteisiin
+              q12 == 3 ~ 3, # rahat riittävät ruokaan ja vaatteisiin, mutta vaivoin kodinkoneisiin
+              q12 == 4 ~ 4, # rahat riittävät kodinkoneisiin, mutta ei muuhun
+              q12 == 5 ~ 5)) # rahat riittävät käytännössä kaikkeen
+  ) %>% 
+  select(support:talous_tilanne, vtpv) %>% 
+  drop_na()
+
+rf_questions <-
+rf %>% 
+  select(q5,
+         q3,
+         q2,
+         q8_1,
+         q8_3,
+         q8_6,
+         q8_7,
+         q8_12,
+         q8_13,
+         q8_14,
+         q8_17,
+         q9_1,
+         q9_2,
+         q9_3,
+         q9_4) %>% 
+  rdhs::get_variable_labels() %>% 
+  mutate(description = str_to_sentence(description))
+
+write.xlsx(rf_questions, here("docs/rf_questions.xlsx"))
+
+rf %>% 
+  select(q5,
+         q3,
+         q2,
+         q8_1,
+         q8_3,
+         q8_6,
+         q8_7,
+         q8_12,
+         q8_13,
+         q8_14,
+         q8_17,
+         q9_1,
+         q9_2,
+         q9_3,
+         q9_4) %>% 
+  look_for()
+
+rf %>% 
+  select(q9_1) %>% 
+  distinct()
+  look_for()
 
 
 ```
@@ -2050,6 +2192,55 @@ kuva_6.2 +
 # jpeg(here("img/kuva_6_final.jpg"), units = "in", width = 14, height = 12, res = 300)
 # kuva_6_final
 # dev.off()
+
+
+
+vtsiom_1_model_2 <- vtsiom_1 %>%
+  select(vo4, sex, age, edu, tip, tv, d1, dohod_0, weight1) %>% 
+  rename(support = vo4,
+         internet_kaytto = d1,
+         perhe_tulot = dohod_0)
+
+vtsiom_2_model_2 <- vtsiom_2 %>%
+  select(vo4, sex, age, edu, tip, tv, d1, dohod_0, weight1) %>% 
+  rename(support = vo4,
+         internet_kaytto = d1,
+         perhe_tulot = dohod_0)
+
+vtsiom_3_model_2 <- vtsiom_3 %>%
+  select(q2, sex, age, edu, tip, tv, d1, dohod_0, weight1) %>% 
+  rename(support = q2,
+         internet_kaytto = d1,
+         perhe_tulot = dohod_0)
+
+vtsiom_4_model_2 <- vtsiom_4 %>%
+  select(q1, sex, age, edu, tip, tv, d1, dohod_0, weight1) %>% 
+  rename(support = q1,
+         internet_kaytto = d1,
+         perhe_tulot = dohod_0)
+
+vtsiom_5_model_2 <- vtsiom_5 %>%
+  select(vo4, sex, age, edu, tip, tv, d1, dohod_0, weight1) %>% 
+  rename(support = vo4,
+         internet_kaytto = d1,
+         perhe_tulot = dohod_0)
+
+vtsiom_6_model_2 <- vtsiom_6 %>%
+  select(vo4, sex, age, edu, tip, tv, d1, dohod_0, weight1) %>% 
+  rename(support = vo4,
+         internet_kaytto = d1,
+         perhe_tulot = dohod_0)
+
+vtsiom_questions <- 
+vtsiom_1 %>% 
+  select(sex:dohod_0, -fo) %>% 
+  rdhs::get_variable_labels()
+
+write.xlsx(vtsiom_questions, here("docs/vtsiom_questions.xlsx"))
+
+vtsiom_1 %>% 
+  select(sex:dohod_0, -fo) %>% 
+  look_for()
 
 ```
 

@@ -1,0 +1,80 @@
+---
+title: "Kyselyiden alkuperäiset muuttujat ja kysymykset"
+subtitle: "*Hyökkäyssodan kannatus Venäjällä* -artikkeli, Idäntutkimus VOL 29 NRO 4 (2022)"
+author: "Eemil Mitikka"
+date: "Pävitetty 7.12.2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(openxlsx)
+library(here)
+library(tidyverse)
+
+labs <- c("Muuttuja",
+          "Kysymys venäjäksi",
+          "Kysymys suomeksi",
+          "Muuttujan skaala")
+
+```
+
+<br>
+
+Alla olevista taulukoista löytyvät *Hyökkäyssodan kannatus Venäjällä* -artikkelin tilastollisissa malleissa käytetyt muuttujat. Taulukkoja tulkitaan seuraavasti:
+
+  * **Muuttuja** sarakkeessa on alkuperäisaineistoissa käytetty muuttujan nimi, esim. `q21`, `gender`, jne.
+  * **Kysymys venäjäksi** sarakkeessa on alkuperäisaineistossa käytetty kysymys, jolla eri muuttujia mitataan.
+  * **Kysymys suomeksi** sarakkeessa on alkuperäisaineistossa käytetyn kysymyksen suomennos. Huom! käännökset ovat omiani, ja näihin voisi löytyä luontevampikin käännös (en ole ammattikääntäjä).
+  * **Muuttujan skaala** sarakkeesta löytyy ***tilastollisissa malleissa käyttämäni skaalaus muuttujille***, eli alkuperäismuuttujien skaaloja on esim. saatettu kääntää, uudelleen luokitella tai suodattaa tiettyjä vaihtoehtoja pois.
+  
+<br>
+
+# Chroniclesin aineiston mallissa käytetyt muuttujat
+
+<br>
+
+
+```{r echo=FALSE}
+kysymykset_chronicles <- here("docs/chronicles_questions.xlsx") %>% 
+  read.xlsx()
+
+colnames(kysymykset_chronicles) <- labs
+
+knitr::kable(kysymykset_chronicles)
+```
+
+<br>
+
+# Russian Fieldin aineiston mallissa käytetyt muuttujat
+
+<br>
+
+```{r echo=FALSE}
+kysymykset_rf <- here("docs/rf_questions.xlsx") %>% 
+  read.xlsx()
+
+colnames(kysymykset_rf) <- labs
+
+knitr::kable(kysymykset_rf)
+```
+
+<br>
+
+# VTsIOMin aineiston mallissa käytetyt muuttujat
+
+<br>
+
+```{r echo=FALSE}
+kysymykset_vtsiom <- here("docs/vtsiom_questions.xlsx") %>% 
+  read.xlsx()
+
+colnames(kysymykset_vtsiom) <- labs
+
+knitr::kable(kysymykset_vtsiom)
+
+
+```
+
+<br>
