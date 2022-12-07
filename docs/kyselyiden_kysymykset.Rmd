@@ -18,6 +18,73 @@ labs <- c("Muuttuja",
           "Kysymys suomeksi",
           "Muuttujan skaala")
 
+# chronicles <- here::here("data/Полные Хроники 5.0.sav") %>% 
+#   haven::read_spss() %>% 
+#   janitor::clean_names()
+
+# chronicles_questions <- 
+#   chronicles %>% 
+#   select(q21,
+#          gender,
+#          age,
+#          edu_gr,
+#          tnp,
+#          q8_1,
+#          q8_2,
+#          q8_5,
+#          q8_9,
+#          q8_8,
+#          q8_6,
+#          q4_2,
+#          q6,
+#          q10,
+#          q4_1,
+#          q4_3) %>% 
+#   rdhs::get_variable_labels()
+# 
+# openxlsx::write.xlsx(chronicles_questions, here("docs/chronicles_questions.xlsx"))
+
+# rf <- here::here("data/МАССИВ SPSS Russian Field - _Россия-Украина_ (всероссийский телефонный опрос, 1600, 5-7 марта).sav") %>% 
+#   haven::read_spss() %>% 
+#   janitor::clean_names()
+# 
+# rf_questions <-
+# rf %>% 
+#   select(q5,
+#          q3,
+#          q2,
+#          q8_1,
+#          q8_3,
+#          q8_6,
+#          q8_7,
+#          q8_12,
+#          q8_13,
+#          q8_14,
+#          q8_17,
+#          q9_1,
+#          q9_2,
+#          q9_3,
+#          q9_4) %>% 
+#   rdhs::get_variable_labels() %>% 
+#   mutate(description = str_to_sentence(description))
+# 
+# write.xlsx(rf_questions, here("docs/rf_questions.xlsx"))
+
+# vtsiom_1 <- here("data/База_Спецоперация (25.02).sav") %>% 
+#   read_spss() %>% 
+#   clean_names()
+# 
+# vtsiom_questions <- 
+# vtsiom_1 %>% 
+#   select(sex:dohod_0, -fo) %>% 
+#   rdhs::get_variable_labels()
+# 
+# write.xlsx(vtsiom_questions, here("docs/vtsiom_questions.xlsx"))
+# 
+# vtsiom_1 %>% 
+#   select(sex:dohod_0, -fo) %>% 
+#   look_for()
+
 ```
 
 <br>
