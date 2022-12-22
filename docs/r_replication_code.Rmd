@@ -1370,11 +1370,12 @@ kuva_4.3 +
 
 # Kuva 5
 
+
 ```{r}
-# Russian Field, Model 1: import the data
-rf <- here::here("data/МАССИВ SPSS Russian Field - _Россия-Украина_ (всероссийский телефонный опрос, 1600, 5-7 марта).sav") %>% 
-  haven::read_spss() %>% 
-  janitor::clean_names() %>% 
+rf <- 
+  here("data/МАССИВ SPSS Russian Field - _Россия-Украина_ (всероссийский телефонный опрос, 1600, 5-7 марта).sav") %>% 
+  read_spss() %>% 
+  clean_names() %>% 
   mutate(support = q5,
          ika = q3,
          sukupuoli = q2,
@@ -1398,9 +1399,12 @@ rf <- here::here("data/МАССИВ SPSS Russian Field - _Россия-Укра�
          muut = as.factor(q8_18),
          en_seuraa = as.factor(q8_19))
 
-# Russian Field, Model 1: subset the data
-rf_model_1_data <- rf %>% 
-  select(support:en_seuraa, vtpv) %>% 
+rf_model_1_data <- 
+  rf %>% 
+  select(support,
+         ika,
+         sukupuoli,
+         vtpv) %>% 
   mutate(
   support = as.factor(
     case_when(support %in% c(1, 2) ~ 1,
@@ -1411,22 +1415,15 @@ rf_model_1_data <- rf %>%
   ika = as.factor(ika)) %>% 
   drop_na()
 
-# Russian Field, Model 1: define weights
-rf_model_1_design <- svydesign(ids =~ 1,
-                               data = rf_model_1_data,
-                               weights = rf_model_1_data$vtpv)
+rf_model_1_design <- 
+  svydesign(ids =~ 1,
+            data = rf_model_1_data,
+            weights = rf_model_1_data$vtpv)
 
 # Russian Field, Model 1: run the model
-rf_model_1 <- svyglm(support ~ ika + 
-                       sukupuoli +
-                       tv +
-                       youtube +
-                       telegram +
-                       tutut +
-                       yandex_google +
-                       valt_nettisivut +
-                       valt_media_nettisivut +
-                       vkontakte,
+rf_model_1 <- 
+  svyglm(support ~ ika + 
+           sukupuoli,
        design = rf_model_1_design,
        family = binomial(logit))
 
@@ -1434,38 +1431,46 @@ rf_model_1 <- svyglm(support ~ ika +
 summary(rf_model_1)
 
 # Russian Field, Model 1:  Confidence intervals
-rf_model_1_cis <- data.frame(confint(rf_model_1)) %>% 
+rf_model_1_cis <- 
+  data.frame(confint(rf_model_1)) %>% 
   rename(lower_ci = 1,
          upper_ci = 2)
 # Russian Field, Model 1:  Calculate Odd Ratios
-rf_model_1_or <- exp(cbind(coef(rf_model_1), confint(rf_model_1))) %>% 
+rf_model_1_or <- 
+  exp(cbind(coef(rf_model_1), confint(rf_model_1))) %>% 
   as.data.frame() %>% 
   rename(oratio = 1,
          oratio_lower = 2,
          oratio_upper = 3)
 
 # Russian Field, Model 1: data for plot
-rf_model_1_plot_data <- tidy(rf_model_1) %>% 
+rf_model_1_plot_data <- 
+  tidy(rf_model_1) %>% 
   cbind(rf_model_1_cis, rf_model_1_or) %>% 
   slice(-1) %>%
   mutate(term = as.factor(term))
 
 # Russian Field, Model 1:  Pseudo R^2: Cox-Snell & Nagelkerke
-rf_model_1_coxsnell <- paste(round(100*psrsq(rf_model_1, method = "Cox-Snell"), digits = 1), "% (Cox-Snell)", sep = "")
-rf_model_1_nagelkerke <- paste(round(100*psrsq(rf_model_1, method = "Nagelkerke"), digits = 1), "% (Nagelkerke)", sep = "")
+rf_model_1_coxsnell <- 
+  paste(
+    round(
+      100*psrsq(rf_model_1, method = "Cox-Snell"), digits = 1), "% (Cox-Snell)", sep = "")
+
+rf_model_1_nagelkerke <- 
+  paste(
+    round(
+      100*psrsq(
+        rf_model_1,
+        method = "Nagelkerke"),
+      digits = 1),
+    "% (Nagelkerke)",
+    sep = "")
+
 # Russian Field, Model 1: plot X-axis labels
-rf_model_1_labels <- c("30–44-vuotiaat **",
+rf_model_1_labels <- c("30–44-vuotiaat ***",
                        "45–59-vuotiaat ***",
-                       "60-vuotiaat ja vanhemmat",
-                       "Sukupuoli: mies *",
-                       "Tiedonlähde: Telegram",
-                       "Tiedonlähde: Tutut ihmiset",
-                       "Tiedonlähde: TV ***",
-                       "Tiedonlähde: Valtionmedian nettisivut *",
-                       "Tiedonlähde: Valtioelinten nettisivut *",
-                       "Tiedonlähde: VKontakte",
-                       "Tiedonlähde: Yandex tai Google",
-                       "Tiedonlähde: YouTube ***")
+                       "60-vuotiaat ja vanhemmat ***",
+                       "Sukupuoli: mies")
 
 vari_rf <- "#1189E6"
   
@@ -1487,9 +1492,122 @@ kuva_5.1 <-
                              paste(R^2, " = ", .(rf_model_1_nagelkerke))))) +
   scale_x_discrete(labels = rf_model_1_labels)
 
+# Russian Field, Model 2: subset the data
+rf_model_2_data <- 
+  rf %>% 
+  select(support:en_seuraa, vtpv) %>% 
+  mutate(
+  support = as.factor(
+    case_when(support %in% c(1, 2) ~ 1,
+              support %in% c(3, 4) ~ 0)),
+  sukupuoli = as.factor(
+    case_when(sukupuoli == 1 ~ 1, # mies
+              sukupuoli == 2 ~ 0)), # nainen
+  ika = as.factor(ika)) %>% 
+  drop_na()
+
+# Russian Field, Model 2: define weights
+rf_model_2_design <- svydesign(ids =~ 1,
+                               data = rf_model_2_data,
+                               weights = rf_model_2_data$vtpv)
+
+# Russian Field, Model 2: run the model
+rf_model_2 <- svyglm(support ~ ika + 
+                       sukupuoli +
+                       tv +
+                       youtube +
+                       telegram +
+                       tutut +
+                       yandex_google +
+                       valt_nettisivut +
+                       valt_media_nettisivut +
+                       vkontakte,
+       design = rf_model_2_design,
+       family = binomial(logit))
+
+# Russian Field, Model 2: print the results
+summary(rf_model_2)
+
+# Russian Field, Model 2:  Confidence intervals
+rf_model_2_cis <- 
+  data.frame(confint(rf_model_2)) %>% 
+  rename(lower_ci = 1,
+         upper_ci = 2)
+
+# Russian Field, Model 2:  Calculate Odd Ratios
+rf_model_2_or <- 
+  exp(cbind(coef(rf_model_2), confint(rf_model_2))) %>% 
+  as.data.frame() %>% 
+  rename(oratio = 1,
+         oratio_lower = 2,
+         oratio_upper = 3)
+
+# Russian Field, Model 2: data for plot
+rf_model_2_plot_data <- 
+  tidy(rf_model_2) %>% 
+  cbind(rf_model_2_cis, rf_model_2_or) %>% 
+  slice(-1) %>%
+  mutate(term = as.factor(term))
+
+# Russian Field, Model 2:  Pseudo R^2: Cox-Snell & Nagelkerke
+rf_model_2_coxsnell <- 
+  paste(
+    round(
+      100*psrsq(
+        rf_model_2,
+        method = "Cox-Snell"),
+      digits = 1),
+    "% (Cox-Snell)",
+    sep = "")
+
+rf_model_2_nagelkerke <- 
+  paste(
+    round(
+      100*psrsq(
+        rf_model_2,
+        method = "Nagelkerke"),
+      digits = 1),
+    "% (Nagelkerke)",
+    sep = "")
+
+# Russian Field, Model 2: plot X-axis labels
+rf_model_2_labels <- c("30–44-vuotiaat **",
+                       "45–59-vuotiaat ***",
+                       "60-vuotiaat ja vanhemmat",
+                       "Sukupuoli: mies *",
+                       "Tiedonlähde: Telegram",
+                       "Tiedonlähde: Tutut ihmiset",
+                       "Tiedonlähde: TV ***",
+                       "Tiedonlähde: Valtionmedian nettisivut *",
+                       "Tiedonlähde: Valtioelinten nettisivut *",
+                       "Tiedonlähde: VKontakte",
+                       "Tiedonlähde: Yandex tai Google",
+                       "Tiedonlähde: YouTube ***")
+
+vari_rf <- "#1189E6"
   
-# Russian Field, Model 2:  
-rf_model_2_data <- rf %>% 
+# Russian Field, Model 2: Odd ratios plot
+kuva_5.2 <- 
+  rf_model_2_plot_data %>% 
+  ggplot(aes(x = term, y = oratio)) +
+  geom_point(size = 6, color = vari_rf) +
+  coord_flip() +
+  scale_y_log10(breaks = seq(0, 4, 1)) +
+  geom_errorbar(aes(ymax = oratio_upper, ymin = oratio_lower), width = 0.2, color = "grey50") +
+  theme_oma2() +
+  theme(plot.title = element_text(color = vari_rf)) +
+  geom_hline(yintercept = 1, linetype = 2) +
+  labs(title = paste("RUSSIAN FIELD, Malli 2:", odds),
+       x = NULL,
+       y = toupper("Riskiluku (logaritminen asteikko)"),
+       caption = bquote(atop(paste(R^2, " = ", .(rf_model_2_coxsnell)), 
+                             paste(R^2, " = ", .(rf_model_2_nagelkerke))))) +
+  scale_x_discrete(labels = rf_model_2_labels)
+
+  
+# Russian Field, Model 3:  
+rf_model_3_data <- 
+  rf %>% 
   mutate(
   support = as.factor(
     case_when(support %in% c(1, 2) ~ 1,
@@ -1517,13 +1635,13 @@ rf_model_2_data <- rf %>%
   select(support:talous_tilanne, vtpv) %>% 
   drop_na()
 
-# Russian Field, Model 2:  define weights
-rf_model_2_design <- svydesign(ids =~ 1,
-                               data = rf_model_2_data,
-                               weights = rf_model_2_data$vtpv)
+# Russian Field, Model 3:  define weights
+rf_model_3_design <- svydesign(ids =~ 1,
+                               data = rf_model_3_data,
+                               weights = rf_model_3_data$vtpv)
 
-# Russian Field, Model 2:  run the model
-rf_model_2 <- svyglm(support ~ ika + 
+# Russian Field, Model 3:  run the model
+rf_model_3 <- svyglm(support ~ ika + 
                        sukupuoli + 
                        tv + 
                        youtube + 
@@ -1537,33 +1655,55 @@ rf_model_2 <- svyglm(support ~ ika +
                        sanktio_ystavat + 
                        sanktio_perhe + 
                        sanktio_ei_vaikutusta,
-       design = rf_model_2_design,
+       design = rf_model_3_design,
        family = binomial(logit))
-# Russian Field, Model 2: print the results
-summary(rf_model_2)
+# Russian Field, Model 3: print the results
+summary(rf_model_3)
 
-# Russian Field, Model 2: Confidence intervals
-rf_model_2_cis <- data.frame(confint(rf_model_2)) %>% 
+# Russian Field, Model 3: Confidence intervals
+rf_model_3_cis <- 
+  data.frame(confint(rf_model_3)) %>% 
   rename(lower_ci = 1,
          upper_ci = 2)
-# Russian Field, Model 2: Calculate Odd Ratios
-rf_model_2_or <- exp(cbind(coef(rf_model_2), confint(rf_model_2))) %>% 
+
+# Russian Field, Model 3: Calculate Odd Ratios
+rf_model_3_or <- 
+  exp(cbind(coef(rf_model_3), confint(rf_model_3))) %>% 
   as.data.frame() %>% 
   rename(oratio = 1,
          oratio_lower = 2,
          oratio_upper = 3)
 
-# Russian Field, Model 2: data for plot
-rf_model_2_plot_data <- tidy(rf_model_2) %>% 
-  cbind(rf_model_2_cis, rf_model_2_or) %>% 
+# Russian Field, Model 3: data for plot
+rf_model_3_plot_data <- 
+  tidy(rf_model_3) %>% 
+  cbind(rf_model_3_cis, rf_model_3_or) %>% 
   slice(-1) %>%
   mutate(term = as.factor(term))
 
-# Russian Field, Model 2:  Pseudo R^2: Cox-Snell & Nagelkerke
-rf_model_2_coxsnell <- paste(round(100*psrsq(rf_model_2, method = "Cox-Snell"), digits = 1), "% (Cox-Snell)", sep = "")
-rf_model_2_nagelkerke <- paste(round(100*psrsq(rf_model_2, method = "Nagelkerke"), digits = 1), "% (Nagelkerke)", sep = "")
-# Russian Field, Model 2: X-axis labels
-rf_model_2_labels <- c("30–44-vuotiaat **",
+# Russian Field, Model 3:  Pseudo R^2: Cox-Snell & Nagelkerke
+rf_model_3_coxsnell <- 
+  paste(
+    round(
+      100*psrsq(
+        rf_model_3,
+        method = "Cox-Snell"),
+      digits = 1),
+    "% (Cox-Snell)",
+    sep = "")
+
+rf_model_3_nagelkerke <- 
+  paste(
+    round(
+      100*psrsq(
+        rf_model_3,
+        method = "Nagelkerke"),
+      digits = 1),
+    "% (Nagelkerke)",
+    sep = "")
+
+# Russian Field, Model 3: X-axis labels
+rf_model_3_labels <- c("30–44-vuotiaat **",
                        "45–59-vuotiaat **",
                        "60-vuotiaat ja vanhemmat",
                        "Sanktiot: ei vaikutusta *",
@@ -1580,9 +1720,9 @@ rf_model_2_labels <- c("30–44-vuotiaat **",
                        "Tiedonlähde: Yandex tai Google",
                        "Tiedonlähde: YouTube **")
 
-# Russian Field, Model 2: Odd ratios plot
-kuva_5.2 <-
-rf_model_2_plot_data %>% 
+# Russian Field, Model 3: Odd ratios plot
+kuva_5.3 <-
+rf_model_3_plot_data %>% 
   ggplot(aes(x = term, y = oratio)) +
   geom_point(size = 6, color = vari_rf) +
   coord_flip() +
@@ -1591,26 +1731,27 @@ rf_model_2_plot_data %>%
   theme_oma2() +
   theme(plot.title = element_text(color = vari_rf)) +
   geom_hline(yintercept = 1, linetype = 2) +
-  labs(title = paste("RUSSIAN FIELD, Malli 2:", odds),
+  labs(title = paste("RUSSIAN FIELD, Malli 3:", odds),
        x = NULL,
        y = toupper("Riskiluku (logaritminen asteikko)"),
-       caption = bquote(atop(paste(R^2, " = ", .(rf_model_2_coxsnell)),
-                      paste(R^2, " = ", .(rf_model_2_nagelkerke))))) +
-  scale_x_discrete(labels = rf_model_2_labels)
+       caption = bquote(atop(paste(R^2, " = ", .(rf_model_3_coxsnell)),
+                      paste(R^2, " = ", .(rf_model_3_nagelkerke))))) +
+  scale_x_discrete(labels = rf_model_3_labels)
 
 kuva_5 <-
   kuva_5.1 /
-  kuva_5.2 +
+  kuva_5.2 /
+  kuva_5.3  +
   plot_annotation(caption = p_arvot) &
     theme(plot.caption = element_text(size = 15,
                                       family = "Times",
                                       face = "bold"))
 
-rf_coxsnell <- paste(expression(R^2), "=", rf_model_2_coxsnell,"<br>")
-rf_nagelkerke <- paste(expression(R^2), "=", rf_model_2_nagelkerke,"<br>")
+rf_coxsnell <- paste(expression(R^2), "=", rf_model_3_coxsnell,"<br>")
+rf_nagelkerke <- paste(expression(R^2), "=", rf_model_3_nagelkerke,"<br>")
 
 kuva_5_final <-
-kuva_5.2 +
+kuva_5.3 +
   labs(title = paste("Russian Field-aineiston malli:", odds),
        caption = c(paste(rf_coxsnell,
                        rf_nagelkerke),
@@ -1829,15 +1970,16 @@ vtsiom_6_model_2 <- vtsiom_6 %>%
          perhe_tulot = dohod_0)
 
 # VTSIOM, Model 2: Merge datasets
-vtsiom_model_2_data <- rbind(vtsiom_1_model_2, 
+vtsiom_model_full_data <- rbind(vtsiom_1_model_2, 
                              vtsiom_2_model_2,
                              vtsiom_3_model_2,
                              vtsiom_4_model_2,
                              vtsiom_5_model_2,
                              vtsiom_6_model_2)
+
 # VTSIOM, Model 2: data tranform
 vtsiom_model_2_data <-
-  vtsiom_model_2_data %>% 
+  vtsiom_model_full_data %>% 
   mutate(
     ika = as.factor(
       case_when(
@@ -1878,6 +2020,164 @@ vtsiom_model_2_data <-
                 internet_kaytto == 3 ~ 4, # pari kertaa viikossa
                 internet_kaytto == 4 ~ 3, # pari kertaa kuukaudessa
                 internet_kaytto == 5 ~ 2, # harvoin, mutta 
+                internet_kaytto == 96 ~ 1)) # en käytä nettiä
+  ) %>% 
+    select(support, 
+           ika,
+           sukupuoli,
+           koulutus,
+           asuinpaikka,
+           tv,
+           internet_kaytto,
+           weight1) %>% 
+    drop_na()
+
+# VTSIOM, Model 2: Define weights
+vtsiom_model_2_design <- 
+  svydesign(ids =~ 1,
+            data = vtsiom_model_2_data,
+            weights = vtsiom_model_2_data$weight1)
+
+# VTSIOM, Model 2: Define model
+vtsiom_model_2 <- svyglm(support ~ 
+                           ika + 
+                           sukupuoli +
+                           koulutus + 
+                           asuinpaikka + 
+                           tv + 
+                           internet_kaytto,
+                         design = vtsiom_model_2_design,
+                         family = binomial(logit))
+
+# VTSIOM, Model 2: print the results
+summary(vtsiom_model_2)
+
+# VTSIOM, Model 2: Confidence intervals
+vtsiom_model_2_cis <- 
+  data.frame(confint(vtsiom_model_2)) %>% 
+  rename(lower_ci = 1,
+         upper_ci = 2)
+
+# VTSIOM, Model 2: Calculate Odd Ratios
+vtsiom_model_2_or <- 
+  exp(cbind(coef(vtsiom_model_2), confint(vtsiom_model_2))) %>% 
+  as.data.frame() %>% 
+  rename(oratio = 1,
+         oratio_lower = 2,
+         oratio_upper = 3)
+
+# VTSIOM, Model 2: data for plot
+vtsiom_model_2_plot_data <- 
+  tidy(vtsiom_model_2) %>% 
+  cbind(vtsiom_model_2_cis, vtsiom_model_2_or) %>% 
+  slice(-1) %>%
+  mutate(term = as.factor(term))
+
+# VTSIOM, Model 2: Pseudo R^2: Cox-Snell & Nagelkerke
+vtsiom_model_2_coxsnell <- 
+  paste(
+    round(
+      100*psrsq(
+        vtsiom_model_2,
+        method = "Cox-Snell"),
+      digits = 1),
+    "% (Cox-Snell)",
+    sep = "")
+
+vtsiom_model_2_nagelkerke <- 
+  paste(
+    round(
+      100*psrsq(
+        vtsiom_model_2,
+        method = "Nagelkerke"),
+      digits = 1),
+    "% (Nagelkerke)",
+    sep = "")
+
+# VTSIOM, Model 2: plot labels
+vtsiom_model_2_labels <- c("Kaupungin tapainen taajama",
+                           "Alle 50,000 asukkaan kaupunki",
+                           "50,000–100,000 asukkaan kaupunki",
+                           "100,000–500,000 asukkaan kaupunki",
+                           "500,000–950,000 asukkaan kaupunki *",
+                           "Miljoonakaupunki ***",
+                           "30–44-vuotiaat ***",
+                           "45–59-vuotiaat ***",
+                           "60-vuotiaat ja vanhemmat ***",
+                           "Internetin käyttö: harvoin",
+                           "Internetin käyttö: muutama kerta kuussa",
+                           "Internetin käyttö: muutama kerta viikossa",
+                           "Internetin käyttö: päivittäin alle 4h",
+                           "Internetin käyttö: päivittäin yli 4h",
+                           "Korkeakoulutettu",
+                           "Sukupuoli: mies ***",
+                           "TV:n katselu: harvoin",
+                           "TV:n katselu: muutama kerta kuussa ***",
+                           "TV:n katselu: muutama kerta viikossa ***",
+                           "TV:n katselu: päivittäin alle 4h ***",
+                           "TV:n katselu: päivittäin yli 4h ***")
+
+# VTSIOM, Model 2: Odd ratios plot
+kuva_6.2 <-
+  vtsiom_model_2_plot_data %>% 
+  ggplot(aes(x = term, y = oratio)) +
+  geom_point(size = 6, color = vari_vtsiom) +
+  coord_flip() +
+  scale_y_log10(breaks = seq(0, 9, 1)) +
+  geom_errorbar(aes(ymin = oratio_lower, ymax = oratio_upper), width = 0.2, color = "grey50") +
+  theme_oma2() +
+  theme(plot.title = element_text(color = vari_vtsiom)) +
+  geom_hline(yintercept = 1, linetype = 2) +
+  labs(title = paste("VTSIOM, Malli 2:", odds),
+       x = NULL,
+       y = toupper("Riskiluku (logaritminen asteikko)"),
+              caption = bquote(atop(paste(R^2, " = ", .(vtsiom_model_2_coxsnell)),
+                             paste(R^2, " = ", .(vtsiom_model_2_nagelkerke))))) +
+  scale_x_discrete(labels = vtsiom_model_2_labels)
+
+# VTSIOM, Model 3: data tranform
+vtsiom_model_3_data <-
+  vtsiom_model_full_data %>% 
+  mutate(
+    ika = as.factor(
+      case_when(
+        between(age, 18, 29) ~ "18-29",
+        between(age, 30, 44) ~ "30-44",
+        between(age, 45, 59) ~ "45-59",
+        age >= 60 ~ "60 ja yli")),
+    support = as.factor(
+      case_when(
+        support == 1 ~ 1, # tukee
+        support == 2 ~ 0)), # ei tue
+    sukupuoli = as.factor(
+      case_when(
+        sex == 1 ~ 1, # mies
+        sex == 2 ~ 0)), # nainen
+    koulutus = as.factor(
+      case_when(
+        edu %in% c(5, 6) ~ 1, # korkeakoulutettu
+        edu %in% c(1, 2, 3, 4) ~ 0)), # ei korkeakoulutettu
+    asuinpaikka = as.factor(
+      case_when(tip == 1 ~ 7, # Miljoonakaupunki
+                tip == 2 ~ 6, # 500,000-950,000 asukasta
+                tip == 3 ~ 5, # 100,000-500,000 asukasta
+                tip == 4 ~ 4, # 50,000-100,000 asukasta
+                tip == 5 ~ 3, # alle 50,000 asukasta
+                tip == 6 ~ 2, # kaupungin tapainen taajama
+                tip == 7 ~ 1)), # kylä
+    tv = as.factor(
+      case_when(tv == 1 ~ 6, # päivittäin yli 4 tuntia
+                tv == 2 ~ 5, # päivittäin alle 4 tuntia
+                tv == 3 ~ 4, # pari kertaa viikossa
+                tv == 4 ~ 3, # pari kertaa kuukaudessa
+                tv == 5 ~ 2, # harvoin, mutta useammin kuin kerran puolessa vuodessa
+                tv == 6 ~ 1)), # en katso TV:tä
+    internet_kaytto = as.factor(
+      case_when(internet_kaytto == 1 ~ 6, # päivittäin yli 4h
+                internet_kaytto == 2 ~ 5, # päivittäin alle 4h
+                internet_kaytto == 3 ~ 4, # pari kertaa viikossa
+                internet_kaytto == 4 ~ 3, # pari kertaa kuukaudessa
+                internet_kaytto == 5 ~ 2, # harvoin, mutta
                 internet_kaytto == 96 ~ 1)), # en käytä nettiä
     perhe_tulot = as.factor(
       case_when(perhe_tulot == 1 ~ 5, # todella hyvä
@@ -1886,45 +2186,83 @@ vtsiom_model_2_data <-
                 perhe_tulot == 4 ~ 2, # huono
                 perhe_tulot == 5 ~ 1)) # todella huono
   ) %>% 
-    select(support, ika, sukupuoli, koulutus, asuinpaikka, tv, internet_kaytto, perhe_tulot, weight1) %>% 
+    select(support,
+           ika,
+           sukupuoli,
+           koulutus,
+           asuinpaikka,
+           tv,
+           internet_kaytto,
+           perhe_tulot,
+           weight1) %>% 
     drop_na()
 
-# VTSIOM, Model 2: Define weights
-vtsiom_model_2_design <- svydesign(ids =~ 1,
-                                   data = vtsiom_model_2_data,
-                                   weights = vtsiom_model_2_data$weight1)
+# VTSIOM, Model 3: Define weights
+vtsiom_model_3_design <- 
+  svydesign(ids =~ 1,
+            data = vtsiom_model_3_data,
+            weights = vtsiom_model_3_data$weight1)
 
-# VTSIOM, Model 2: Define model
-vtsiom_model_2 <- svyglm(support ~ ika + sukupuoli + koulutus + asuinpaikka + tv + internet_kaytto + perhe_tulot,
-                         design = vtsiom_model_2_design,
-                         family = binomial(logit))
-# VTSIOM, Model 2: print the results
-summary(vtsiom_model_2)
+# VTSIOM, Model 3: Define model
+vtsiom_model_3 <- 
+  svyglm(support ~ 
+           ika + 
+           sukupuoli + 
+           koulutus + 
+           asuinpaikka + 
+           tv + 
+           internet_kaytto + 
+           perhe_tulot,
+         design = vtsiom_model_3_design,
+         family = binomial(logit))
 
-# VTSIOM, Model 2: Confidence intervals
-vtsiom_model_2_cis <- data.frame(confint(vtsiom_model_2)) %>% 
+# VTSIOM, Model 3: print the results
+summary(vtsiom_model_3)
+
+# VTSIOM, Model 3: Confidence intervals
+vtsiom_model_3_cis <- 
+  data.frame(confint(vtsiom_model_3)) %>% 
   rename(lower_ci = 1,
          upper_ci = 2)
-# VTSIOM, Model 2: Calculate Odd Ratios
-vtsiom_model_2_or <- exp(cbind(coef(vtsiom_model_2), confint(vtsiom_model_2))) %>% 
+
+# VTSIOM, Model 3: Calculate Odd Ratios
+vtsiom_model_3_or <- 
+  exp(cbind(coef(vtsiom_model_3), confint(vtsiom_model_3))) %>% 
   as.data.frame() %>% 
   rename(oratio = 1,
          oratio_lower = 2,
          oratio_upper = 3)
 
-# VTSIOM, Model 2: data for plot
-vtsiom_model_2_plot_data <- tidy(vtsiom_model_2) %>% 
-  cbind(vtsiom_model_2_cis, vtsiom_model_2_or) %>% 
+# VTSIOM, Model 3: data for plot
+vtsiom_model_3_plot_data <- 
+  tidy(vtsiom_model_3) %>% 
+  cbind(vtsiom_model_3_cis, vtsiom_model_3_or) %>% 
   slice(-1) %>%
   mutate(term = as.factor(term))
 
-# VTSIOM, Model 2: Pseudo R^2: Cox-Snell & Nagelkerke
-vtsiom_model_2_coxsnell <- paste(round(100*psrsq(vtsiom_model_2, method = "Cox-Snell"), digits = 1), "% (Cox-Snell)", sep = "")
+# VTSIOM, Model 3: Pseudo R^2: Cox-Snell & Nagelkerke
+vtsiom_model_3_coxsnell <- 
+  paste(
+    round(
+      100*psrsq(
+        vtsiom_model_3,
+        method = "Cox-Snell"),
+      digits = 1),
+    "% (Cox-Snell)",
+    sep = "")
 
-vtsiom_model_2_nagelkerke <- paste(round(100*psrsq(vtsiom_model_2, method = "Nagelkerke"), digits = 1), "% (Nagelkerke)", sep = "")
+vtsiom_model_3_nagelkerke <- 
+  paste(
+    round(
+      100*psrsq(
+        vtsiom_model_3,
+        method = "Nagelkerke"),
+      digits = 1),
+    "% (Nagelkerke)",
+    sep = "")
 
-# VTSIOM, Model 2: plot labels
-vtsiom_model_2_labels <- c("Kaupungin tapainen taajama",
+# VTSIOM, Model 3: plot labels
+vtsiom_model_3_labels <- c("Kaupungin tapainen taajama",
                            "Alle 50,000 asukkaan kaupunki",
                            "50,000–100,000 asukkaan kaupunki",
                            "100,000–500,000 asukkaan kaupunki *",
@@ -1950,9 +2288,9 @@ vtsiom_model_2_labels <- c("Kaupungin tapainen taajama",
                            "TV:n katselu: päivittäin alle 4h ***",
                            "TV:n katselu: päivittäin yli 4h ***")
 
-# VTSIOM, Model 2: Odd ratios plot
-kuva_6.2 <- 
-  vtsiom_model_2_plot_data %>% 
+# VTSIOM, Model 3: Odd ratios plot
+kuva_6.3<- 
+  vtsiom_model_3_plot_data %>% 
   ggplot(aes(x = term, y = oratio)) +
   geom_point(size = 6, color = vari_vtsiom) +
   coord_flip() +
@@ -1961,30 +2299,31 @@ kuva_6.2 <-
   theme_oma2() +
   theme(plot.title = element_text(color = vari_vtsiom)) +
   geom_hline(yintercept = 1, linetype = 2) +
-  labs(title = paste("VTSIOM, Malli 2:", odds),
+  labs(title = paste("VTSIOM, Malli 3:", odds),
        x = NULL,
        y = toupper("Riskiluku (logaritminen asteikko)"),
-              caption = bquote(atop(paste(R^2, " = ", .(vtsiom_model_2_coxsnell)),
-                             paste(R^2, " = ", .(vtsiom_model_2_nagelkerke))))) +
-  scale_x_discrete(labels = vtsiom_model_2_labels)
+              caption = bquote(atop(paste(R^2, " = ", .(vtsiom_model_3_coxsnell)),
+                             paste(R^2, " = ", .(vtsiom_model_3_nagelkerke))))) +
+  scale_x_discrete(labels = vtsiom_model_3_labels)
 
 kuva_6 <- 
   kuva_6.1 /
-  kuva_6.2 +
+  kuva_6.2 /
+  kuva_6.3 +
   plot_annotation(caption = p_arvot) &
   theme(plot.caption = element_text(size = 15,
                                       family = "Times",
                                       face = "bold"))
 
-# jpeg(here("img/kuva_6.jpg"), units = "in", width = 16, height = 18, res = 300)
+# jpeg(here("img/kuva_6.jpg"), units = "in", width = 16, height = 20, res = 300)
 # kuva_6
 # dev.off()
 
-vtsiom_coxsnell <- paste(expression(R^2), "=", vtsiom_model_2_coxsnell,"<br>")
-vtsiom_nagelkerke <- paste(expression(R^2), "=", vtsiom_model_2_nagelkerke,"<br>")
+vtsiom_coxsnell <- paste(expression(R^2), "=", vtsiom_model_3_coxsnell,"<br>")
+vtsiom_nagelkerke <- paste(expression(R^2), "=", vtsiom_model_3_nagelkerke,"<br>")
 
 kuva_6_final <- 
-kuva_6.2 +
+kuva_6.3 +
   labs(title = paste("VTsIOM-aineiston malli:", odds),
        caption = c(paste(vtsiom_coxsnell,
                        vtsiom_nagelkerke),
