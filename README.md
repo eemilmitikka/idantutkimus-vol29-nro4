@@ -1,6 +1,6 @@
 # idantutkimus-vol29-nro4
 
-Replikaatiokoodit R-ohjelmointikielellä ja RStudiolla (versio: 2022.7.0.548) tehtyihin visualisointeihin ja data-analyyseihin Idäntutkimuksen "Ääni"-teemanumeroon kirjoitettuun artikkeliin. [r_replication_code.Rmd](https://github.com/eemilmitikka/idantutkimus-vol29-nro4/blob/main/docs/r_replication_code.Rmd) -tiedosto sisältää artikkelin visualisointien ja analyysien replikaatiokoodit. R-koodi yleisiin visuloisointeihin löytyy *Kuva 1*, *Kuva 2* ja *Kuva 3* alta, ja tilastollisiin malleihin *Kuva 4*, *Kuva 5* ja *Kuva 6* otsikoiden alla olevista osioista.
+Replikaatiokoodit R-ohjelmointikielellä ja RStudiolla (versio: 2022.7.0.548) tehtyihin visualisointeihin ja data-analyyseihin Idäntutkimuksen "Ääni"-teemanumeroon kirjoitettuun *Hyökkäyssodan kannatus Venäjällä* artikkeliini. [r_replication_code.Rmd](https://github.com/eemilmitikka/idantutkimus-vol29-nro4/blob/main/docs/r_replication_code.Rmd) -tiedosto sisältää artikkelin visualisointien ja analyysien replikaatiokoodit. R-koodi yleisiin visuloisointeihin löytyy *Kuva 1*, *Kuva 2* ja *Kuva 3* alta, ja tilastollisiin malleihin *Kuva 4*, *Kuva 5* ja *Kuva 6* otsikoiden alla olevista osioista.
 
 Dokumentti on koostettu siten, että parsimalla (*knit*) tiedoston kasaan koodien pitäisi toimia ja tuottaa haluttu tulos.
 
