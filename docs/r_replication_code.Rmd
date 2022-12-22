@@ -1,7 +1,7 @@
 ---
-title: "\"Ketkä kannattavat hyökkäyssotaa Venäjällä?\" -artikkelin R-koodit"
+title: "\"Hyökkäyssodan kannatus Venäjällä\" -artikkelin R-koodit"
 author: "Eemil Mitikka"
-date: "Päivitetty: 22 marraskuuta 2022"
+date: "Päivitetty: 22 joulukuuta 2022"
 output: html_document
 ---
 
@@ -12,9 +12,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 # R-paketit, teemat, yms.
-```{r}
-
-```
 
 ```{r warning=FALSE, message=FALSE}
 library(tidyverse)
@@ -773,9 +770,9 @@ kuva_2_paivitetty <-
 
 
 
-jpeg(here("img/kuva_2_paivitetty.jpg"), units = "in", width = 17, height = 12, res = 300)
-kuva_2_paivitetty
-dev.off()
+# jpeg(here("img/kuva_2_paivitetty.jpg"), units = "in", width = 17, height = 12, res = 300)
+# kuva_2_paivitetty
+# dev.off()
 
 ```
 
@@ -946,9 +943,9 @@ rr_p / rr_p_count +
                                                                                size = 20,
                                                                                face = "bold"))
 
-jpeg(here("img/kuva_3.jpg"), units = "in", width = 16, height = 14, res = 300)
-kuva_3
-dev.off()
+# jpeg(here("img/kuva_3.jpg"), units = "in", width = 16, height = 14, res = 300)
+# kuva_3
+# dev.off()
 
 
 ```
@@ -1370,68 +1367,6 @@ kuva_4.3 +
 # dev.off()
 
 ```
-
-
-```{r}
-p <- ggplot(mtcars, aes(x=wt, y = mpg)) + 
-   geom_point()
-
-p + labs(caption = c("right footer", "left footer")) + 
-theme(plot.caption = element_text(hjust=c(1, 0)))
-
-p +
-  labs(title = paste(expression("*R*"^2), "Jee")) +
-  theme(plot.title = element_markdown())
-
-p +
-  labs(title = paste(expression(R^2), "=", chronicles_model_3_coxsnell)) +
-  theme(plot.title = element_markdown())
-
-p +
-  labs(title = paste(expression(R^2), "=", chronicles_model_3_coxsnell,
-                     expression(R^2), "=", chronicles_model_3_nagelkerke))
-
-p +
-  theme_oma3() +
-  labs(caption = paste(expression(R^2), "=", chronicles_model_3_coxsnell, "\n",
-                     expression(R^2), "=", chronicles_model_3_nagelkerke)) +
-  theme(plot.caption = element_markdown())
-
-p +
-  theme_oma3() +
-  labs(caption = paste(chronicles_coxsnell, chronicles_nagelkerke, p_arvot)) +
-  theme(plot.caption = element_markdown())
-
-chronicles_coxsnell <- paste(expression(R^2), "=", chronicles_model_3_coxsnell,"<br>")
-chronicles_nagelkerke <- paste(expression(R^2), "=", chronicles_model_3_nagelkerke,"<br>")
-
-
-
-chronicles_coxsnell <- paste(expression("*R*"^2), "=", chronicles_model_3_coxsnell,"<br>")
-
-
-chronicles_coxsnell <- paste(expression(R^2), "=", chronicles_model_3_coxsnell,"\n")
-chronicles_nagelkerke <- paste(expression(R^2), "=", chronicles_model_3_nagelkerke)
-
-p1 <- 
-kuva_4.3 +
-  theme_oma3() +
-  labs(title = paste("Chronicles-aineiston malli:", odds),
-       caption = paste(chronicles_coxsnell, chronicles_nagelkerke, p_arvot)) +
-  theme(plot.title = element_text(color = vari_chronicles,
-                                  margin = margin(10,0,0,0)),
-        # plot.caption = element_text(margin = margin(10,0,0,0)),
-        plot.caption = element_markdown(margin = margin(10,0,0,0)))
-
-
-jpeg(here("img/kuva_4_testi.jpg"), units = "in", width = 14, height = 12, res = 300)
-p1
-dev.off()
-
-
-```
-
-
 
 # Kuva 5
 
